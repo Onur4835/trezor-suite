@@ -2,13 +2,12 @@
  * Adds a CSP (Content Security Policy) header to all requests
  */
 
-import { app, dialog, session } from 'electron';
-
+import { app, dialog } from 'electron';
 import * as config from '../config';
 
 const disableCspFlag = app.commandLine.hasSwitch('disable-csp');
 
-const init = ({ mainWindow }: Dependencies) => {
+const init = ({ mainWindow, interceptor }: Dependencies) => {
     const { logger } = global;
 
     if (disableCspFlag) {
@@ -20,14 +19,15 @@ const init = ({ mainWindow }: Dependencies) => {
             buttons: ['OK'],
         });
     } else {
-        session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+        interceptor.onHeadersReceived(details => {
             logger.debug('csp', `Header applied to ${details.url}`);
-            callback({
+
+            return {
                 responseHeaders: {
                     'Content-Security-Policy': [config.cspRules.join(';')],
                     ...details.responseHeaders,
                 },
-            });
+            };
         });
     }
 };

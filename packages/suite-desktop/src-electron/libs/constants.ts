@@ -27,6 +27,7 @@ export const MODULES = [
     'udev-install',
     'user-data',
     'trezor-connect-ipc',
+    'invity-authentication',
 ];
 
 // Modules only used in prod mode
