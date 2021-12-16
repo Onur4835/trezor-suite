@@ -211,6 +211,12 @@ const routes = [
         params: walletParams,
     },
     {
+        name: 'wallet-coinmarket-savings-account-verified',
+        pattern: '/accounts/coinmarket/savings/account-verified',
+        app: 'wallet',
+        params: walletParams,
+    },
+    {
         name: 'wallet-coinmarket-redirect',
         pattern: '/coinmarket-redirect',
         app: 'wallet',
