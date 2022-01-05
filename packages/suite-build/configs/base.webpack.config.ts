@@ -81,6 +81,9 @@ const config: webpack.Configuration = {
         maxAssetSize: 10 * 1000 * 1000,
         maxEntrypointSize: 1000 * 1000,
     },
+    experiments: {
+        asyncWebAssembly: true,
+    },
     module: {
         rules: [
             // TypeScript/JavaScript

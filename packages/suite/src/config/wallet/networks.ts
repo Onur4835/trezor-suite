@@ -416,6 +416,32 @@ const networks = [
             account: 'https://test.bithomp.com/explorer/',
         },
     },
+    {
+        name: 'Cardano',
+        networkType: 'cardano',
+        symbol: 'ada',
+        bip43Path: "m/1852'/1815'/i'",
+        decimals: 6,
+        testnet: false,
+        explorer: {
+            tx: 'https://explorer.blockfrost.dev/transaction/',
+            account: 'https://explorer.blockfrost.dev/account/',
+            token: 'https://explorer.blockfrost.dev/token/',
+        },
+    },
+    {
+        name: 'Cardano Testnet',
+        networkType: 'cardano',
+        symbol: 'tada',
+        bip43Path: "m/1852'/1815'/i'",
+        decimals: 6,
+        testnet: true,
+        explorer: {
+            tx: 'https://testnet-explorer.blockfrost.dev/transaction/',
+            account: 'https://testnet-explorer.blockfrost.dev/account/',
+            token: 'https://testnet-explorer.blockfrost.dev/token/',
+        },
+    },
 ] as const;
 
 type Network = {

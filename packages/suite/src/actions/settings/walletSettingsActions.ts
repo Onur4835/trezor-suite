@@ -4,6 +4,7 @@ import * as suiteActions from '@suite-actions/suiteActions';
 import { Dispatch, GetState } from '@suite-types';
 import { Network } from '@wallet-types';
 import { BlockbookUrl } from '@wallet-types/blockbook';
+import { DerivationType } from '@wallet-types/cardano';
 import { NETWORKS } from '@wallet-config';
 import { toTorUrl } from '@suite-utils/tor';
 
@@ -18,6 +19,10 @@ export type WalletSettingsAction =
       }
     | { type: typeof WALLET_SETTINGS.SET_BLOCKBOOK_URLS; payload: BlockbookUrl[] }
     | { type: typeof WALLET_SETTINGS.ADD_BLOCKBOOK_URL; payload: BlockbookUrl }
+    | {
+          type: typeof WALLET_SETTINGS.SET_CARDANO_DERIVATION_TYPE;
+          payload: DerivationType;
+      }
     | { type: typeof WALLET_SETTINGS.REMOVE_BLOCKBOOK_URL; payload: BlockbookUrl }
     | { type: typeof WALLET_SETTINGS.CLEAR_TOR_BLOCKBOOK_URLS };
 
@@ -82,6 +87,11 @@ export const addBlockbookUrl = (payload: BlockbookUrl): WalletSettingsAction => 
 
 export const removeBlockbookUrl = (payload: BlockbookUrl): WalletSettingsAction => ({
     type: WALLET_SETTINGS.REMOVE_BLOCKBOOK_URL,
+    payload,
+});
+
+export const setCardanoDerivationType = (payload: DerivationType): WalletSettingsAction => ({
+    type: WALLET_SETTINGS.SET_CARDANO_DERIVATION_TYPE,
     payload,
 });
 

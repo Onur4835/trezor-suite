@@ -7,3 +7,4 @@ export const ADD_BLOCKBOOK_URL = '@wallet-settings/add-blockbook-url';
 export const REMOVE_BLOCKBOOK_URL = '@wallet-settings/remove-blockbook-url';
 export const CLEAR_TOR_BLOCKBOOK_URLS = '@wallet-settings/clear-tor-blockbook-urls';
 export const FROM_STORAGE = '@wallet-settings/from-storage';
+export const SET_CARDANO_DERIVATION_TYPE = '@wallet-settings/set-cardano-derivation-type';

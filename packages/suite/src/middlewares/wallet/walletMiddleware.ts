@@ -1,11 +1,12 @@
 import { MiddlewareAPI } from 'redux';
 import { SUITE, ROUTER } from '@suite-actions/constants';
-import { ACCOUNT } from '@wallet-actions/constants';
+import { ACCOUNT, TRANSACTION } from '@wallet-actions/constants';
 import { WALLET_SETTINGS } from '@settings-actions/constants';
 import * as selectedAccountActions from '@wallet-actions/selectedAccountActions';
 import * as sendFormActions from '@wallet-actions/sendFormActions';
 import * as modalActions from '@suite-actions/modalActions';
 import * as receiveActions from '@wallet-actions/receiveActions';
+import * as cardanoStakingActions from '@wallet-actions/cardanoStakingActions';
 import * as coinmarketBuyActions from '@wallet-actions/coinmarketBuyActions';
 import * as transactionActions from '@wallet-actions/transactionActions';
 import * as blockchainActions from '@wallet-actions/blockchainActions';
@@ -40,6 +41,15 @@ const walletMiddleware =
                 .wallet.settings.blockbookUrls.filter(b => b.tor)
                 .map(b => b.coin);
             api.dispatch(blockchainActions.clearCustomBackend(torCoins));
+        }
+
+        if (action.type === TRANSACTION.ADD) {
+            api.dispatch(
+                cardanoStakingActions.validatePendingStakeTxOnTx(
+                    action.account,
+                    action.transactions,
+                ),
+            );
         }
 
         // propagate action to reducers

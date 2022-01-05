@@ -8,14 +8,20 @@ import * as modalActions from '@suite-actions/modalActions';
 import * as metadataActions from '@suite-actions/metadataActions';
 import { SEND } from '@wallet-actions/constants';
 import { formatAmount, formatNetworkAmount, getPendingAccount } from '@wallet-utils/accountUtils';
-
+import { isCardanoTx } from '@wallet-utils/cardanoUtils';
 import { Dispatch, GetState } from '@suite-types';
 import { Account } from '@wallet-types';
-import { FormState, UseSendFormState, PrecomposedTransactionFinal } from '@wallet-types/sendForm';
+import {
+    FormState,
+    UseSendFormState,
+    PrecomposedTransactionFinal,
+    PrecomposedTransactionFinalCardano,
+} from '@wallet-types/sendForm';
 import * as sendFormBitcoinActions from './send/sendFormBitcoinActions';
 import * as sendFormEthereumActions from './send/sendFormEthereumActions';
 import * as sendFormRippleActions from './send/sendFormRippleActions';
 import { MetadataAddPayload } from '@suite/types/suite/metadata';
+import * as sendFormCardanoActions from './send/sendFormCardanoActions';
 
 export type SendFormAction =
     | {
@@ -96,6 +102,9 @@ export const composeTransaction =
         if (account.networkType === 'ripple') {
             return dispatch(sendFormRippleActions.composeTransaction(formValues, formState));
         }
+        if (account.networkType === 'cardano') {
+            return dispatch(sendFormCardanoActions.composeTransaction(formValues, formState));
+        }
     };
 
 // this is only a wrapper for `openDeferredModal` since it doesn't work with `bindActionCreators`
@@ -157,7 +166,7 @@ const pushTransaction = () => async (dispatch: Dispatch, getState: GetState) => 
             }),
         );
 
-        if (precomposedTx.prevTxid) {
+        if (!isCardanoTx(account, precomposedTx) && precomposedTx.prevTxid) {
             // notification from the backend may be delayed.
             // modify affected transaction(s) in the reducer until the real account update occurs.
             // this will update transaction details (like time, fee etc.)
@@ -181,7 +190,13 @@ const pushTransaction = () => async (dispatch: Dispatch, getState: GetState) => 
         const { metadata } = getState();
         if (metadata.enabled) {
             const { precomposedForm } = getState().wallet.send;
-            const { outputsPermutation } = precomposedTx?.transaction;
+            let outputsPermutation: number[];
+            if (isCardanoTx(account, precomposedTx)) {
+                // cardano preserves order of outputs
+                outputsPermutation = precomposedTx?.transaction.outputs.map((_o, i) => i);
+            } else {
+                outputsPermutation = precomposedTx?.transaction.outputsPermutation;
+            }
 
             precomposedForm?.outputs
                 // create array of metadata objects
@@ -222,7 +237,10 @@ const pushTransaction = () => async (dispatch: Dispatch, getState: GetState) => 
 };
 
 export const signTransaction =
-    (formValues: FormState, transactionInfo: PrecomposedTransactionFinal) =>
+    (
+        formValues: FormState,
+        transactionInfo: PrecomposedTransactionFinal | PrecomposedTransactionFinalCardano,
+    ) =>
     async (dispatch: Dispatch, getState: GetState) => {
         const { device } = getState().suite;
         const { account } = getState().wallet.selectedAccount;
@@ -248,12 +266,12 @@ export const signTransaction =
             (!hasDecreasedOutput && nativeRbfAvailable) ||
             (hasDecreasedOutput && decreaseOutputAvailable);
 
-        const enhancedTxInfo: PrecomposedTransactionFinal = {
+        const enhancedTxInfo: PrecomposedTransactionFinal | PrecomposedTransactionFinalCardano = {
             ...transactionInfo,
             rbf: formValues.options.includes('bitcoinRBF'),
         };
 
-        if (formValues.rbfParams) {
+        if (formValues.rbfParams && !isCardanoTx(account, enhancedTxInfo)) {
             enhancedTxInfo.prevTxid = formValues.rbfParams.txid;
             enhancedTxInfo.feeDifference = new BigNumber(transactionInfo.fee)
                 .minus(formValues.rbfParams.baseFee)
@@ -278,20 +296,27 @@ export const signTransaction =
 
         // signTransaction by Trezor
         let serializedTx: string | undefined;
-        if (account.networkType === 'bitcoin') {
+        // Type guard to differentiate between PrecomposedTransactionFinal and PrecomposedTransactionFinalCardano
+        if (isCardanoTx(account, enhancedTxInfo)) {
             serializedTx = await dispatch(
-                sendFormBitcoinActions.signTransaction(formValues, enhancedTxInfo),
+                sendFormCardanoActions.signTransaction(formValues, enhancedTxInfo),
             );
-        }
-        if (account.networkType === 'ethereum') {
-            serializedTx = await dispatch(
-                sendFormEthereumActions.signTransaction(formValues, enhancedTxInfo),
-            );
-        }
-        if (account.networkType === 'ripple') {
-            serializedTx = await dispatch(
-                sendFormRippleActions.signTransaction(formValues, enhancedTxInfo),
-            );
+        } else {
+            if (account.networkType === 'bitcoin') {
+                serializedTx = await dispatch(
+                    sendFormBitcoinActions.signTransaction(formValues, enhancedTxInfo),
+                );
+            }
+            if (account.networkType === 'ethereum') {
+                serializedTx = await dispatch(
+                    sendFormEthereumActions.signTransaction(formValues, enhancedTxInfo),
+                );
+            }
+            if (account.networkType === 'ripple') {
+                serializedTx = await dispatch(
+                    sendFormRippleActions.signTransaction(formValues, enhancedTxInfo),
+                );
+            }
         }
 
         dispatch(suiteActions.setProcessMode(device, undefined));
@@ -347,6 +372,7 @@ export const pushRawTransaction =
                 dispatch(accountActions.fetchAndUpdateAccount(account));
             }
         } else {
+            console.warn(sentTx.payload.error);
             dispatch(
                 notificationActions.addToast({
                     type: 'sign-tx-error',

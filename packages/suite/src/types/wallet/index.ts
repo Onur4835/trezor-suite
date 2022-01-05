@@ -15,11 +15,13 @@ import { AccountSearchAction } from '@wallet-actions/accountSearchActions';
 import { TransactionAction } from '@wallet-actions/transactionActions';
 import { SelectedAccountAction } from '@wallet-actions/selectedAccountActions';
 import { FormDraftAction } from '@wallet-actions/formDraftActions';
+import { CardanoStakingAction } from '@wallet-actions/cardanoStakingActions';
 import { NETWORKS } from '@wallet-config';
 import { ArrayElement } from '../utils';
 
 export type Network = ArrayElement<typeof NETWORKS>;
 // reexport
+export type { CardanoMergedUtxo } from './cardano';
 export type { NetworkToken, Token } from './tokenTypes';
 export type { Icon } from './iconTypes';
 export type { Account } from '@wallet-reducers/accountsReducer';
@@ -63,4 +65,5 @@ export type WalletAction =
     | CoinmarketCommonAction
     | SendFormAction
     | AccountSearchAction
-    | FormDraftAction;
+    | FormDraftAction
+    | CardanoStakingAction;

@@ -98,6 +98,14 @@ export type ToastPayload = (
           message: string;
           asset: Network['symbol'];
       }
+    | {
+          type: 'cardano-delegate-error';
+          error: string;
+      }
+    | {
+          type: 'cardano-withdrawal-error';
+          error: string;
+      }
 ) &
     Options;
 

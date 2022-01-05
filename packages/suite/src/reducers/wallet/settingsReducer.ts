@@ -5,6 +5,7 @@ import { WALLET_SETTINGS } from '@settings-actions/constants';
 import { Action } from '@suite-types';
 import { Network } from '@wallet-types';
 import { BlockbookUrl } from '@wallet-types/blockbook';
+import { DerivationType } from '@wallet-types/cardano';
 
 export interface State {
     localCurrency: string;
@@ -14,6 +15,7 @@ export interface State {
         [key: string]: Omit<FeeLevel, 'blocks'>; // Key: Network['symbol']
     };
     blockbookUrls: BlockbookUrl[];
+    cardanoDerivationType: DerivationType;
 }
 
 export const initialState: State = {
@@ -22,6 +24,10 @@ export const initialState: State = {
     enabledNetworks: ['btc'],
     lastUsedFeeLevel: {},
     blockbookUrls: [],
+    cardanoDerivationType: {
+        label: 'Icarus',
+        value: 1,
+    },
 };
 
 const settingsReducer = (state: State = initialState, action: Action): State =>
@@ -52,6 +58,10 @@ const settingsReducer = (state: State = initialState, action: Action): State =>
 
             case WALLET_SETTINGS.SET_BLOCKBOOK_URLS:
                 draft.blockbookUrls = action.payload;
+                break;
+
+            case WALLET_SETTINGS.SET_CARDANO_DERIVATION_TYPE:
+                draft.cardanoDerivationType = action.payload;
                 break;
 
             case WALLET_SETTINGS.ADD_BLOCKBOOK_URL:

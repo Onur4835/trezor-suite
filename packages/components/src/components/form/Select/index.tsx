@@ -94,6 +94,8 @@ const selectStyle = (
     }),
     menu: (base: Record<string, any>) => ({
         ...base,
+        width: 'max-content',
+        minWidth: '100%',
         background: theme.BG_WHITE_ALT,
         margin: '5px 0',
         boxShadow: `box-shadow: 0 4px 10px 0 ${theme.BOX_SHADOW_BLACK_20}`,

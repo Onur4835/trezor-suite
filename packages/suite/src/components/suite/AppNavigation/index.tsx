@@ -156,6 +156,8 @@ const StyledIcon = styled(Icon)`
     margin-right: 10px;
 `;
 
+const RightContent = styled.div``;
+
 const StyledDropdown = styled(Dropdown)`
     background: ${props => props.theme.BG_SECONDARY};
     width: 38px;
@@ -187,6 +189,7 @@ export type AppNavigationItem = {
     icon?: IconProps['icon'];
     'data-test'?: string;
     isHidden?: boolean;
+    rightContent?: JSX.Element;
 };
 
 interface Props {
@@ -208,7 +211,8 @@ const isSubsection = (routeName: Route['name']): boolean =>
         routeName.startsWith('settings') ||
         routeName === 'wallet-index' ||
         routeName === 'wallet-details' ||
-        routeName === 'wallet-tokens'
+        routeName === 'wallet-tokens' ||
+        routeName === 'wallet-staking'
     );
 
 const isSecondaryMenuOverflown = ({ primary, secondary, wrapper }: MenuWidths) =>
@@ -289,6 +293,7 @@ const AppNavigation = ({ items, primaryContent, maxWidth, inView }: Props) => {
                                                 )}
 
                                                 <Text>{title}</Text>
+                                                <RightContent>{item.rightContent}</RightContent>
                                             </HoverAnimation>
                                         </StyledNavLink>
                                     );

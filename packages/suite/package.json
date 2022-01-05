@@ -19,6 +19,7 @@
         "test-health": "jest -c jest.config.health.js"
     },
     "dependencies": {
+        "@fivebinaries/coin-selection": "2.0.0-beta.7",
         "@ethereumjs/common": "^2.6.0",
         "@ethereumjs/tx": "^3.4.0",
         "@sentry/browser": "^6.16.1",

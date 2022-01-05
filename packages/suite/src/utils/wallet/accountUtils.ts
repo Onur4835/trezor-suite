@@ -1,9 +1,15 @@
 import { State as TransactionsState } from '@wallet-reducers/transactionReducer';
-import { AccountInfo, AccountAddress, PrecomposedTransaction } from 'trezor-connect';
+import { isCardanoTx } from '@wallet-utils/cardanoUtils';
+import {
+    AccountInfo,
+    AccountAddresses,
+    AccountAddress,
+    PrecomposedTransaction,
+} from 'trezor-connect';
 import BigNumber from 'bignumber.js';
 import { ACCOUNT_TYPE } from '@wallet-constants/account';
 import { Account, Network, CoinFiatRates, WalletParams, Discovery } from '@wallet-types';
-import { PrecomposedTransactionFinal } from '@wallet-types/sendForm';
+import { PrecomposedTransactionFinal, TxFinalCardano } from '@wallet-types/sendForm';
 import { AppState } from '@suite-types';
 import { NETWORKS } from '@wallet-config';
 import { toFiatCurrency } from './fiatConverterUtils';
@@ -13,6 +19,9 @@ import {
     WIKI_ACCOUNT_BIP49_URL,
     WIKI_ACCOUNT_BIP44_URL,
 } from '@suite-constants/urls';
+
+export const isUtxoBased = (account: Account) =>
+    account.networkType === 'bitcoin' || account.networkType === 'cardano';
 
 export const parseBIP44Path = (path: string) => {
     const regEx = /m\/(\d+'?)\/(\d+'?)\/(\d+'?)\/([0,1])\/(\d+)/;
@@ -81,6 +90,8 @@ export const getTitleForNetwork = (symbol: Account['symbol']) => {
             return 'TR_NETWORK_XRP';
         case 'txrp':
             return 'TR_NETWORK_XRP_TESTNET';
+        case 'tada':
+            return 'TR_NETWORK_CARDANO_TESTNET';
         default:
             return 'TR_NETWORK_UNKNOWN';
     }
@@ -99,6 +110,8 @@ export const getBip43Type = (path: string) => {
             return 'bip49';
         case `44'`:
             return 'bip44';
+        case `1852'`:
+            return 'shelley';
         default:
             return 'unknown';
     }
@@ -109,6 +122,7 @@ export const getAccountTypeName = (path: string) => {
     if (bip43 === 'bip86') return 'TR_ACCOUNT_TYPE_BIP86_NAME';
     if (bip43 === 'bip84') return 'TR_ACCOUNT_TYPE_BIP84_NAME';
     if (bip43 === 'bip49') return 'TR_ACCOUNT_TYPE_BIP49_NAME';
+    if (bip43 === 'shelley') return 'TR_ACCOUNT_TYPE_SHELLEY';
     return 'TR_ACCOUNT_TYPE_BIP44_NAME';
 };
 
@@ -117,6 +131,7 @@ export const getAccountTypeTech = (path: string) => {
     if (bip43 === 'bip86') return 'TR_ACCOUNT_TYPE_BIP86_TECH';
     if (bip43 === 'bip84') return 'TR_ACCOUNT_TYPE_BIP84_TECH';
     if (bip43 === 'bip49') return 'TR_ACCOUNT_TYPE_BIP49_TECH';
+    if (bip43 === 'shelley') return 'TR_ACCOUNT_TYPE_SHELLEY';
     return 'TR_ACCOUNT_TYPE_BIP44_TECH';
 };
 
@@ -125,6 +140,7 @@ export const getAccountTypeDesc = (path: string) => {
     if (bip43 === 'bip86') return 'TR_ACCOUNT_TYPE_BIP86_DESC';
     if (bip43 === 'bip84') return 'TR_ACCOUNT_TYPE_BIP84_DESC';
     if (bip43 === 'bip49') return 'TR_ACCOUNT_TYPE_BIP49_DESC';
+    if (bip43 === 'shelley') return 'TR_ACCOUNT_TYPE_SHELLEY_DESC';
     return 'TR_ACCOUNT_TYPE_BIP44_DESC';
 };
 
@@ -133,6 +149,7 @@ export const getAccountTypeUrl = (path: string) => {
     if (bip43 === 'bip86') return WIKI_ACCOUNT_BIP86_URL;
     if (bip43 === 'bip84') return WIKI_ACCOUNT_BIP84_URL;
     if (bip43 === 'bip49') return WIKI_ACCOUNT_BIP49_URL;
+    if (bip43 === 'shelley') return undefined;
     return WIKI_ACCOUNT_BIP44_URL;
 };
 
@@ -292,6 +309,48 @@ export const enhanceTokens = (tokens: Account['tokens']) => {
         }));
 };
 
+export const enhanceAddresses = (
+    addresses: AccountAddresses | undefined,
+    networkType: Account['networkType'],
+    accountIndex: Account['index'],
+): AccountAddresses | undefined => {
+    if (!addresses) return undefined;
+    if (networkType !== 'cardano') return addresses;
+
+    const accountIndexStr = accountIndex.toString();
+    const used = addresses.used.map(address => ({
+        ...address,
+        path: address.path.replace('i', accountIndexStr),
+    }));
+    const unused = addresses.unused.map(address => ({
+        ...address,
+        path: address.path.replace('i', accountIndexStr),
+    }));
+    const change = addresses.change.map(address => ({
+        ...address,
+        path: address.path.replace('i', accountIndexStr),
+    }));
+
+    return { used, unused, change };
+};
+
+export const enhanceUtxo = (
+    utxos: Account['utxo'],
+    networkType: Account['networkType'],
+    accountIndex: Account['index'],
+): Account['utxo'] => {
+    if (!utxos) return undefined;
+    if (networkType !== 'cardano') return utxos;
+
+    const accountIndexStr = accountIndex.toString();
+    const enhancedUtxos = utxos.map(utxo => ({
+        ...utxo,
+        path: utxo.path.replace('i', accountIndexStr),
+    }));
+
+    return enhancedUtxos;
+};
+
 export const getAccountFiatBalance = (
     account: Account,
     localCurrency: string,
@@ -373,10 +432,16 @@ export const isAccountOutdated = (account: Account, freshInfo: AccountInfo) => {
     const changedEthereum =
         account.networkType === 'ethereum' && freshInfo.misc!.nonce !== account.misc.nonce;
 
+    const changedCardano =
+        account.networkType === 'cardano' &&
+        freshInfo.misc!.staking?.isActive !== account.misc.staking.isActive &&
+        freshInfo.misc!.staking?.poolId !== account.misc.staking.poolId;
+
     return (
         changedTxCountOfflineFresh ||
         changedTxCountOffline ||
         changedTxCountOnline ||
+        changedCardano ||
         changedRipple ||
         changedEthereum
     );
@@ -405,6 +470,22 @@ export const getAccountSpecific = (
             networkType,
             misc: {
                 nonce: misc && misc.nonce ? misc.nonce : '0',
+            },
+            marker: undefined,
+            page: accountInfo.page,
+        };
+    }
+
+    if (networkType === 'cardano') {
+        return {
+            networkType,
+            misc: {
+                staking: {
+                    rewards: misc && misc.staking ? misc.staking.rewards : '0',
+                    isActive: misc && misc.staking ? misc.staking.isActive : false,
+                    address: misc && misc.staking ? misc.staking.address : '',
+                    poolId: misc && misc.staking ? misc.staking.poolId : null,
+                },
             },
             marker: undefined,
             page: accountInfo.page,
@@ -567,9 +648,10 @@ export const getUtxoFromSignedTransaction = (
 // solves race condition between pushing transaction and received notification
 export const getPendingAccount = (
     account: Account,
-    tx: PrecomposedTransactionFinal,
+    tx: PrecomposedTransactionFinal | TxFinalCardano,
     txid: string,
 ) => {
+    if (isCardanoTx(account, tx)) return;
     // TODO: implement ETH
     if (tx.type !== 'final' || account.networkType !== 'bitcoin' || tx.useDecreaseOutput) return; // do not change user balance if tx output was decreased. balance is still the same: 0
 

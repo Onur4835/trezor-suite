@@ -215,7 +215,8 @@ export const subscribe =
     (symbol: Network['symbol'], fiatRates = false) =>
     async (_: Dispatch, getState: GetState) => {
         // fiat rates should be subscribed only once, after onConnect event
-        if (fiatRates) {
+        // methods for fiat rates are missing in cardano backends
+        if (fiatRates && symbol !== 'ada' && symbol !== 'tada') {
             const { success } = await TrezorConnect.blockchainSubscribeFiatRates({ coin: symbol });
             // if first subscription fails, do not run the second one
             if (!success) return;
