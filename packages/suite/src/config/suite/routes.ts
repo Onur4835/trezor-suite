@@ -217,6 +217,24 @@ const routes = [
         params: walletParams,
     },
     {
+        name: 'wallet-coinmarket-savings-user-info',
+        pattern: '/accounts/coinmarket/savings/user-info',
+        app: 'wallet',
+        params: walletParams,
+    },
+    {
+        name: 'wallet-coinmarket-savings-phone-number-verification',
+        pattern: '/accounts/coinmarket/savings/phone-number-verification',
+        app: 'wallet',
+        params: walletParams,
+    },
+    {
+        name: 'wallet-coinmarket-savings-kyc-start',
+        pattern: '/accounts/coinmarket/savings/kyc-start',
+        app: 'wallet',
+        params: walletParams,
+    },
+    {
         name: 'wallet-coinmarket-redirect',
         pattern: '/coinmarket-redirect',
         app: 'wallet',

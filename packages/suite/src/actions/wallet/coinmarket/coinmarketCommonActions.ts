@@ -8,6 +8,7 @@ import { Account } from '@wallet-types';
 import { ComposedTransactionInfo } from '@wallet-reducers/coinmarketReducer';
 import * as suiteActions from '@suite-actions/suiteActions';
 import { submitRequestForm as envSubmitRequestForm, isDesktop } from '@suite-utils/env';
+import { WhoAmI } from '@suite/components/wallet/CoinmarketAuthentication';
 
 export type CoinmarketCommonAction =
     | {
@@ -21,6 +22,10 @@ export type CoinmarketCommonAction =
       }
     | {
           type: typeof COINMARKET_COMMON.LOAD_DATA;
+      }
+    | {
+          type: typeof COINMARKET_COMMON.SAVE_INVITY_AUTHENTICATION;
+          invityAuthentication: WhoAmI;
       };
 
 export const verifyAddress =
@@ -154,4 +159,9 @@ export const setLoading = (isLoading: boolean, lastLoadedTimestamp?: number) => 
 
 export const loadInvityData = () => ({
     type: COINMARKET_COMMON.LOAD_DATA,
+});
+
+export const saveInvityAuthentication = (invityAuthentication: WhoAmI) => ({
+    type: COINMARKET_COMMON.SAVE_INVITY_AUTHENTICATION,
+    invityAuthentication,
 });
