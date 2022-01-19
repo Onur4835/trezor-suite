@@ -8,7 +8,7 @@ import { Account } from '@wallet-types';
 import { ComposedTransactionInfo } from '@wallet-reducers/coinmarketReducer';
 import * as suiteActions from '@suite-actions/suiteActions';
 import { submitRequestForm as envSubmitRequestForm, isDesktop } from '@suite-utils/env';
-import { WhoAmI } from '@suite/components/wallet/CoinmarketAuthentication';
+import type { WhoAmI } from '@wallet-components/InvityAuthentication';
 
 export type CoinmarketCommonAction =
     | {
