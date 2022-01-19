@@ -110,11 +110,22 @@ export function cloneBuffer(buffer: Buffer): Buffer {
     return clone;
 }
 
-export const pushDataSize = pushdata.encodingLength;
-export const readPushDataInt = pushdata.decode;
+type PushDataSize = (len: number) => number;
+type ReadPushDataInt = (
+    buffer: Buffer,
+    offset: number,
+) => {
+    opcode: number;
+    number: number;
+    size: number;
+};
+type WritePushDataInt = (buffer: Buffer, number: number, offset: number) => number;
+
+export const pushDataSize: PushDataSize = pushdata.encodingLength;
+export const readPushDataInt: ReadPushDataInt = pushdata.decode;
 // export const varIntBuffer = varuint.encode; // TODO: not-used
 export const varIntSize = varuint.encodingLength;
-export const writePushDataInt = pushdata.encode;
+export const writePushDataInt: WritePushDataInt = pushdata.encode;
 
 /**
  * Helper class for serialization of bitcoin data types into a pre-allocated buffer.
