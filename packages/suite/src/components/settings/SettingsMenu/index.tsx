@@ -1,9 +1,31 @@
 import React, { useState } from 'react';
 
+import styled, { css } from 'styled-components';
+
 import { CloseButton, Translation, AppNavigationPanel, AppNavigation } from '@suite-components';
 import { useActions, useSelector } from '@suite-hooks';
 import * as routerActions from '@suite-actions/routerActions';
 import * as suiteActions from '@suite-actions/suiteActions';
+import { FADE_IN } from '@trezor/components/lib/config/animations';
+
+const StyledCloseButton = styled(CloseButton)``;
+
+const FloatingTitleContent = styled.div<{ inView?: boolean }>`
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 32px;
+    height: 32px;
+    ${props =>
+        !props.inView &&
+        css`
+            top: -5px;
+            & ${StyledCloseButton} {
+                animation: ${FADE_IN} 0.3s;
+                position: fixed;
+            }
+        `}
+`;
 
 const SettingsMenu = () => {
     const { setDebugMode, goto } = useActions({
@@ -82,10 +104,12 @@ const SettingsMenu = () => {
                 />
             }
             titleContent={
-                <CloseButton
-                    onClick={() => goto(settingsBackRoute.name, settingsBackRoute.params)}
-                    data-test="@settings/menu/close"
-                />
+                <FloatingTitleContent>
+                    <StyledCloseButton
+                        onClick={() => goto(settingsBackRoute.name, settingsBackRoute.params)}
+                        data-test="@settings/menu/close"
+                    />
+                </FloatingTitleContent>
             }
         />
     );
