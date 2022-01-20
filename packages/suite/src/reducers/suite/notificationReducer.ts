@@ -91,6 +91,9 @@ export type ToastPayload = (
           address: string;
           amount?: number;
       }
+    | {
+          type: 'invity-logout-successful';
+      }
 ) &
     Options;
 
