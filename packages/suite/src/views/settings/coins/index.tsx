@@ -2,8 +2,9 @@ import React from 'react';
 import styled from 'styled-components';
 import { SettingsLayout } from '@settings-components';
 import { CoinsGroup, Translation } from '@suite-components';
-import { Section } from '@suite-components/Settings';
+import { Section, DeviceBanner } from '@suite-components/Settings';
 import { useEnabledNetworks } from '@settings-hooks/useEnabledNetworks';
+import { useDevice } from '@suite-hooks';
 
 const StyledSettingsLayout = styled(SettingsLayout)`
     & > * + * {
@@ -18,8 +19,19 @@ const StyledCoinsGroup = styled(CoinsGroup)`
 const Settings = () => {
     const { mainnets, testnets, enabledNetworks, setEnabled } = useEnabledNetworks();
 
+    const { device, isLocked } = useDevice();
+    const isDeviceLocked = !!device && isLocked();
+
     return (
         <StyledSettingsLayout>
+            {isDeviceLocked && (
+                <DeviceBanner
+                    title={<Translation id="TR_SETTINGS_DEVICE_BANNER_TITLE_UNAVAILABLE" />}
+                    description={
+                        <Translation id="TR_SETTINGS_DEVICE_BANNER_DESCRIPTION_UNAVAILABLE" />
+                    }
+                />
+            )}
             <Section title={<Translation id="TR_COINS" />}>
                 <StyledCoinsGroup
                     networks={mainnets}

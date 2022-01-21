@@ -213,7 +213,7 @@ const Settings = () => {
                             offset={10}
                             placement="top"
                             dashed={false}
-                            cursor="default"
+                            cursor="not-allowed"
                             content={
                                 !metadata.enabled &&
                                 (!device || !device?.connected || !device?.state) && (
