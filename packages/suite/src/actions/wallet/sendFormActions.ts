@@ -180,9 +180,15 @@ const pushTransaction = () => async (dispatch: Dispatch, getState: GetState) => 
         if (pendingAccount) {
             // update account
             dispatch(accountActions.updateAccount(pendingAccount));
+            if (account.networkType === 'cardano') {
+                // manually add fake pending tx as we don't have the data about mempool txs
+                dispatch(transactionActions.addFakePendingTx(precomposedTx, txid, pendingAccount));
+            }
         }
 
-        if (account.networkType !== 'bitcoin') {
+        if (account.networkType !== 'bitcoin' && account.networkType !== 'cardano') {
+            // there is no point in fetching account data right after tx submit
+            //  as the account will update only after the tx is confirmed
             dispatch(accountActions.fetchAndUpdateAccount(account));
         }
 

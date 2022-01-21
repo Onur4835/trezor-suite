@@ -102,7 +102,7 @@ describe('cardanoStakingActions', () => {
 
         // less than 10 blocks elapsed, tx should still be there
         store.dispatch(
-            cardanoStakingActions.validatePendingStakeTxOnBlock({
+            cardanoStakingActions.validatePendingTxOnBlock({
                 coin: { shortcut: 'ada' },
                 blockHeight: 8,
             } as BlockchainBlock),
@@ -115,7 +115,7 @@ describe('cardanoStakingActions', () => {
         // more than 10 blocks since pushing the transaction to a blockchain
         // validatePendingStakeTxOnBlock will be triggered from blockchainMiddleware on BLOCKCHAIN.BLOCK
         store.dispatch(
-            cardanoStakingActions.validatePendingStakeTxOnBlock({
+            cardanoStakingActions.validatePendingTxOnBlock({
                 coin: { shortcut: 'ada' },
                 blockHeight: 15,
             } as BlockchainBlock),

@@ -159,6 +159,14 @@ export const fetchAndUpdateAccount =
             const { payload } = response;
 
             const analyze = analyzeTransactions(payload.history.transactions || [], accountTxs);
+
+            if (account.networkType === 'cardano') {
+                // filter out cardano pending tx as they are added manually and backend never returns them
+                // if tx got confirmed then it will be added as part of analyze.add array and replaced in reducer
+                // (TRANSACTION.ADD will replace the tx if tx with same txid already exists)
+                analyze.remove = analyze.remove.filter(tx => !!tx.blockHeight);
+            }
+
             if (analyze.remove.length > 0) {
                 dispatch(transactionActions.remove(account, analyze.remove));
             }

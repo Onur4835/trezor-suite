@@ -1,15 +1,13 @@
 import { State as TransactionsState } from '@wallet-reducers/transactionReducer';
-import { isCardanoTx } from '@wallet-utils/cardanoUtils';
-import {
-    AccountInfo,
-    AccountAddresses,
-    AccountAddress,
-    PrecomposedTransaction,
-} from 'trezor-connect';
+import { AccountInfo, AccountAddresses, AccountAddress } from 'trezor-connect';
 import BigNumber from 'bignumber.js';
 import { ACCOUNT_TYPE } from '@wallet-constants/account';
 import { Account, Network, CoinFiatRates, WalletParams, Discovery } from '@wallet-types';
-import { PrecomposedTransactionFinal, TxFinalCardano } from '@wallet-types/sendForm';
+import {
+    PrecomposedTransactionFinal,
+    PrecomposedTransactionFinalCardano,
+    TxFinalCardano,
+} from '@wallet-types/sendForm';
 import { AppState } from '@suite-types';
 import { NETWORKS } from '@wallet-config';
 import { toFiatCurrency } from './fiatConverterUtils';
@@ -587,7 +585,7 @@ export const accountSearchFn = (
 
 export const getUtxoFromSignedTransaction = (
     account: Account,
-    tx: PrecomposedTransaction,
+    tx: PrecomposedTransactionFinalCardano | PrecomposedTransactionFinal,
     txid: string,
     prevTxid?: string,
 ) => {
@@ -597,13 +595,23 @@ export const getUtxoFromSignedTransaction = (
     const replaceUtxo = (prevTxid && account.utxo?.filter(u => u.txid === prevTxid)) || [];
 
     // remove utxo used by signed transaction or replaced by new tx (rbf)
-    const utxo =
+
+    const findUtxo = (
+        // this little func is needed in order to slightly change type inputs array to stop ts complaining
+        // not sure how to do this in more elegant way
+        inputs:
+            | (
+                  | PrecomposedTransactionFinalCardano['transaction']['inputs'][number]
+                  | PrecomposedTransactionFinal['transaction']['inputs'][number]
+              )[],
+    ) =>
         account.utxo?.filter(
             u =>
-                !tx.transaction.inputs.find(
-                    i => i.prev_hash === u.txid && i.prev_index === u.vout,
-                ) && u.txid !== prevTxid,
+                !inputs.find(i => i.prev_hash === u.txid && i.prev_index === u.vout) &&
+                u.txid !== prevTxid,
         ) || [];
+
+    const utxo = findUtxo(tx.transaction.inputs);
 
     // join all account addresses
     const addresses = account.addresses
@@ -613,12 +621,12 @@ export const getUtxoFromSignedTransaction = (
     // append utxo created by this transaction
     tx.transaction.outputs.forEach((output, vout) => {
         let addr: AccountAddress | undefined;
-        if (output.address_n) {
+        if ('address_n' in output && output.address_n) {
             // find change address
             const serialized = output.address_n.slice(3, 5).join('/');
             addr = account.addresses?.change.find(a => a.path.endsWith(serialized));
         }
-        if (output.address) {
+        if ('address' in output) {
             // find self address
             addr = addresses.find(a => a.address === output.address);
         }
@@ -651,9 +659,13 @@ export const getPendingAccount = (
     tx: PrecomposedTransactionFinal | TxFinalCardano,
     txid: string,
 ) => {
-    if (isCardanoTx(account, tx)) return;
     // TODO: implement ETH
-    if (tx.type !== 'final' || account.networkType !== 'bitcoin' || tx.useDecreaseOutput) return; // do not change user balance if tx output was decreased. balance is still the same: 0
+    if (
+        tx.type !== 'final' ||
+        (account.networkType !== 'bitcoin' && account.networkType !== 'cardano') ||
+        tx.useDecreaseOutput
+    )
+        return; // do not change user balance if tx output was decreased. balance is still the same: 0
 
     // calculate availableBalance
     let availableBalanceBig = new BigNumber(account.availableBalance).minus(
@@ -671,7 +683,7 @@ export const getPendingAccount = (
             : [];
 
         tx.transaction.outputs.forEach(output => {
-            if (output.address) {
+            if ('address' in output) {
                 // find self address
                 if (addresses.find(a => a.address === output.address)) {
                     // append self outputs to balance

@@ -3,7 +3,10 @@ import { CARDANO_STAKING } from '@wallet-actions/constants';
 import * as accountUtils from '@wallet-utils/accountUtils';
 import { Account, WalletAccountTransaction } from '@wallet-types';
 import { Dispatch, GetState } from '@suite-types';
+import * as transactionActions from '@wallet-actions/transactionActions';
 import { PendingStakeTx } from '@wallet-types/cardanoStaking';
+import { getUnixTime } from 'date-fns';
+import { isPending } from '@wallet-utils/transactionUtils';
 
 export type CardanoStakingAction =
     | { type: typeof CARDANO_STAKING.ADD_PENDING_STAKE_TX; pendingStakeTx: PendingStakeTx }
@@ -18,10 +21,9 @@ export const getPendingStakeTx =
     };
 
 export const setPendingStakeTx =
-    (account: Account, payload: string | null) => (dispatch: Dispatch, getState: GetState) => {
+    (account: Account, payload: string | null) => (dispatch: Dispatch) => {
         if (account.networkType !== 'cardano') return;
 
-        const { blockHeight } = getState().wallet.blockchain[account.symbol];
         const accountKey = accountUtils.getAccountKey(
             account.descriptor,
             account.symbol,
@@ -33,7 +35,7 @@ export const setPendingStakeTx =
                 pendingStakeTx: {
                     accountKey,
                     txid: payload,
-                    blockHeight,
+                    ts: getUnixTime(new Date()),
                 },
             });
         } else {
@@ -44,34 +46,40 @@ export const setPendingStakeTx =
         }
     };
 
-export const validatePendingStakeTxOnBlock =
+export const validatePendingTxOnBlock =
     (block: BlockchainBlock) => (dispatch: Dispatch, getState: GetState) => {
         // Used in cardano staking
         // After sending staking tx (delegation or withdrawal) user needs to wait few blocks til the tx appears on the blockchain.
         // To prevent the user from sending multiple staking tx we need to track that we are waiting for confirmation for the tx that was already sent.
-        // As a failsafe, if the account staking state won't change in 10 blocks since the tx was sent to the network
-        // we will reset `pendingStakeTx`, allowing user to retry the action.
+        // As a failsafe, we will reset `pendingStakeTx` after tx expires (ttl is set to 2 hours), allowing user to retry the action.
         const network = accountUtils.getNetwork(block.coin.shortcut.toLowerCase());
         if (!network || network.networkType !== 'cardano') return;
 
         const accounts = getState().wallet.accounts.filter(
-            account =>
-                account.networkType === 'cardano' &&
-                dispatch(getPendingStakeTx(account)) &&
-                network.symbol === account.symbol,
+            account => account.networkType === 'cardano' && network.symbol === account.symbol,
         );
 
         accounts.forEach(account => {
             // just to make ts happy, filtering is already done above
             if (account.networkType !== 'cardano') return;
-            const pendingTx = dispatch(getPendingStakeTx(account));
-            if (!pendingTx) return;
 
-            if (block.blockHeight - pendingTx.blockHeight > 10) {
-                // reset pending tx on the account if we haven't received confirmation in 10 blocks
-                // (app could be closed before receiving the tx, network problems, etc...)
-                dispatch(setPendingStakeTx(account, null));
-            }
+            const accountPendingTransactions = accountUtils
+                .getAccountTransactions(getState().wallet.transactions.transactions, account)
+                .filter(tx => isPending(tx));
+
+            accountPendingTransactions.forEach(tx => {
+                const ts = getUnixTime(new Date());
+                if (tx.blockTime && ts - tx.blockTime > 7200) {
+                    // all txs from suite have ttl set to 2h
+                    // tx will be rejected by the network if is not included in the blockchain in <2h
+                    dispatch(transactionActions.remove(account, [tx]));
+
+                    const pendingStakeTx = dispatch(getPendingStakeTx(account));
+                    if (tx.txid === pendingStakeTx?.txid) {
+                        dispatch(setPendingStakeTx(account, null));
+                    }
+                }
+            });
         });
     };
 
@@ -80,7 +88,9 @@ export const validatePendingStakeTxOnTx =
         if (account.networkType !== 'cardano') return;
         const pendingTx = dispatch(getPendingStakeTx(account));
 
-        if (txs.find(tx => tx.txid === pendingTx?.txid)) {
+        // remove pending stake tx only if the incoming tx had blockHeight set
+        // otherwise it is fake pending tx we manually set after pushing the tx to a blockchain
+        if (txs.find(tx => tx.txid === pendingTx?.txid && !!tx.blockHeight)) {
             dispatch(setPendingStakeTx(account, null));
         }
     };

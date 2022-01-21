@@ -1,7 +1,7 @@
 export interface PendingStakeTx {
     accountKey: string;
     txid: string;
-    blockHeight: number;
+    ts: number;
 }
 
 export interface StakePool {

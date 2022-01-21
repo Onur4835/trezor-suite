@@ -141,7 +141,12 @@ export type TxFinalCardano = Extract<PrecomposedTransactionBaseCardano, { type: 
     feeLimit?: string;
     estimatedFeeLimit?: string;
     token?: TokenInfo;
+    // fake all rbf props just to make it easier to work with since the codebase doesn't use type guards
     rbf?: boolean;
+    prevTxid?: undefined;
+    feeDifference?: undefined;
+    useNativeRbf?: undefined;
+    useDecreaseOutput?: undefined;
 };
 
 // strict distinction between normal and RBF type

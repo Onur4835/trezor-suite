@@ -5,6 +5,7 @@ import trezorConnect, { CardanoTxSigningMode } from 'trezor-connect';
 import { useActions, useSelector } from '@suite-hooks';
 import * as notificationActions from '@suite-actions/notificationActions';
 import * as cardanoStakingActions from '@wallet-actions/cardanoStakingActions';
+import * as transactionActions from '@wallet-actions/transactionActions';
 import {
     getStakingPath,
     getProtocolMagic,
@@ -67,9 +68,10 @@ export const useCardanoStaking = (): CardanoStaking => {
         locks: state.suite.locks,
         pendingStakeTxs: state.wallet.cardanoStaking.pendingTx,
     }));
-    const { addToast, setPendingStakeTx } = useActions({
+    const { addToast, setPendingStakeTx, addFakePendingTx } = useActions({
         addToast: notificationActions.addToast,
         setPendingStakeTx: cardanoStakingActions.setPendingStakeTx,
+        addFakePendingTx: transactionActions.addFakePendingTx,
     });
     const [trezorPools, setTrezorPools] = useState<PoolsResponse>(undefined);
     const [deposit, setDeposit] = useState<undefined | string>(undefined);
@@ -229,6 +231,7 @@ export const useCardanoStaking = (): CardanoStaking => {
                         type: 'raw-tx-sent',
                         txid,
                     });
+                    addFakePendingTx(txPlan, txid, account);
                     setPendingStakeTx(account, txid);
                 } else {
                     addToast({
@@ -238,7 +241,15 @@ export const useCardanoStaking = (): CardanoStaking => {
                 }
             }
         },
-        [account, addToast, derivationType.value, device, prepareTxPlan, setPendingStakeTx],
+        [
+            account,
+            addFakePendingTx,
+            addToast,
+            derivationType.value,
+            device,
+            prepareTxPlan,
+            setPendingStakeTx,
+        ],
     );
 
     const action = useCallback(
