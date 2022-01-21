@@ -1,6 +1,7 @@
 import TrezorConnect, { CardanoTxSigningMode } from 'trezor-connect';
 import {
     getChangeAddressParameters,
+    getTtl,
     getNetworkId,
     getProtocolMagic,
     transformUserOutputs,
@@ -46,12 +47,15 @@ export const composeTransaction =
 
             try {
                 const txPlan = coinSelection(
-                    utxos,
-                    outputs,
-                    changeAddress.address,
-                    [],
-                    [],
-                    account.descriptor,
+                    {
+                        utxos,
+                        outputs,
+                        changeAddress: changeAddress.address,
+                        certificates: [],
+                        withdrawals: [],
+                        accountPubKey: account.descriptor,
+                        ttl: getTtl(isTestnet(account.symbol)),
+                    },
                     options,
                 );
 
@@ -67,7 +71,7 @@ export const composeTransaction =
                                   txPlan.max && outputs.find(o => o.setMax && o.assets.length === 0)
                                       ? formatNetworkAmount(txPlan.max, account.symbol)
                                       : txPlan.max, // convert lovelace to ADA (for ADA outputs only)
-
+                              ttl: txPlan.ttl,
                               transaction: {
                                   inputs: trezorUtils.transformToTrezorInputs(
                                       txPlan.inputs,
@@ -166,6 +170,7 @@ export const signTransaction =
             protocolMagic: getProtocolMagic(account.symbol),
             networkId: getNetworkId(account.symbol),
             fee: transactionInfo.fee,
+            ttl: transactionInfo.ttl?.toString(),
             derivationType: cardanoDerivationType,
         });
 

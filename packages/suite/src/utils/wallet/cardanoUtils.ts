@@ -159,6 +159,15 @@ export const getDelegationCertificates = (
     return result;
 };
 
+export const getTtl = (testnet: boolean) => {
+    const ttl = 7200; // 2 hours
+    const shelleySlot = testnet ? 48409057 : 4924800;
+    const shelleyTimestamp = testnet ? 1642778273 : 1596491091;
+    const currentTimestamp = Math.floor(new Date().getTime() / 1000);
+    const currentSlot = shelleySlot + currentTimestamp - shelleyTimestamp;
+    return currentSlot + ttl;
+};
+
 export const composeTxPlan = (
     descriptor: string,
     utxo: Account['utxo'],
@@ -172,15 +181,17 @@ export const composeTxPlan = (
             stakingPath: string;
         };
     },
+    ttl?: number,
 ) => {
-    const txPlan = coinSelection(
-        transformUtxos(utxo),
-        [],
-        changeAddress.address,
-        prepareCertificates(certificates),
+    const txPlan = coinSelection({
+        utxos: transformUtxos(utxo),
+        outputs: [],
+        changeAddress: changeAddress.address,
+        certificates: prepareCertificates(certificates),
         withdrawals,
-        descriptor,
-    );
+        accountPubKey: descriptor,
+        ttl,
+    });
 
     return { txPlan, certificates, withdrawals, changeAddress };
 };

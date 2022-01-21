@@ -14,6 +14,7 @@ import {
     composeTxPlan,
     isPoolOverSaturated,
     getStakePoolForDelegation,
+    getTtl,
 } from '@wallet-utils/cardanoUtils';
 import { trezorUtils, CoinSelectionError } from '@fivebinaries/coin-selection';
 import { getNetwork, isTestnet } from '@wallet-utils/accountUtils';
@@ -129,6 +130,7 @@ export const useCardanoStaking = (): CardanoStaking => {
                 certificates,
                 withdrawals,
                 changeAddress,
+                getTtl(isTestnet(account.symbol)),
             );
         },
         [
@@ -137,6 +139,7 @@ export const useCardanoStaking = (): CardanoStaking => {
             account.balance,
             account.descriptor,
             account.utxo,
+            account.symbol,
             stakingPath,
             isStakingActive,
             rewardsAmount,

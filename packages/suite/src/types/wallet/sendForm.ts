@@ -14,6 +14,7 @@ import { TypedValidationRules } from './form';
 
 type FinalTransaction = Extract<PrecomposedTransactionBase, { type: 'final' }>;
 export type PrecomposedTransactionFinalCardano = Omit<FinalTransaction, 'transaction'> & {
+    ttl?: number;
     transaction: {
         inputs: CardanoInput[];
         outputs: CardanoOutput[];
