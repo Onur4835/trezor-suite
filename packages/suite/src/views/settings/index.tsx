@@ -106,8 +106,7 @@ const VersionWithGithubTooltip = ({ appVersion, isDev }: VersionWithGithubToolti
 const Settings = () => {
     const analytics = useAnalytics();
 
-    const { isLocked, device } = useDevice();
-    const isDeviceLocked = device && isLocked();
+    const { device } = useDevice();
 
     const { localCurrency, metadata, desktopUpdate, tor, torOnionLinks } = useSelector(state => ({
         localCurrency: state.wallet.settings.localCurrency,
@@ -209,22 +208,39 @@ const Settings = () => {
                         description={<Translation id="TR_LABELING_FEATURE_ALLOWS" />}
                     />
                     <ActionColumn>
-                        <Switch
-                            // hmm maybe it should never be disabled, as it is not device related option (although it triggers device flow?)
-                            // but on the other hand there still may be case when it remembered device is disconnected and its metadata.status
-                            // is cancelled or disabled. In such case, initMetadata does not make any sense as it needs device connected.
-                            // You could say: "ok, whatever, but this switch is changing only application setting, why messing with device?"
-                            // Yes, you are right, but if it was done this way, you would enable metadata, then go to wallet, discovery
-                            // and maybe device authorization would be triggered and only after that you would get metadata flow started, wouldn't
-                            // that be confusing? I believe it is better to do it right away, but need for disabling this switch in specific
-                            // edge case is a drawback.
-                            isDisabled={!metadata.enabled && !device?.connected && isDeviceLocked}
-                            data-test="@settings/metadata-switch"
-                            checked={metadata.enabled}
-                            onChange={() =>
-                                metadata.enabled ? disableMetadata() : initMetadata(true)
+                        <Tooltip
+                            maxWidth={280}
+                            offset={10}
+                            placement="top"
+                            dashed={false}
+                            cursor="default"
+                            content={
+                                !metadata.enabled &&
+                                (!device || !device?.connected || !device?.state) && (
+                                    <Translation id="TR_DISABLED_SWITCH_TOOLTIP" />
+                                )
                             }
-                        />
+                        >
+                            <Switch
+                                // hmm maybe it should never be disabled, as it is not device related option (although it triggers device flow?)
+                                // but on the other hand there still may be case when it remembered device is disconnected and its metadata.status
+                                // is cancelled or disabled. In such case, initMetadata does not make any sense as it needs device connected.
+                                // You could say: "ok, whatever, but this switch is changing only application setting, why messing with device?"
+                                // Yes, you are right, but if it was done this way, you would enable metadata, then go to wallet, discovery
+                                // and maybe device authorization would be triggered and only after that you would get metadata flow started, wouldn't
+                                // that be confusing? I believe it is better to do it right away, but need for disabling this switch in specific
+                                // edge case is a drawback.
+                                isDisabled={
+                                    !metadata.enabled &&
+                                    (!device || !device?.connected || !device?.state)
+                                }
+                                data-test="@settings/metadata-switch"
+                                checked={metadata.enabled}
+                                onChange={() =>
+                                    metadata.enabled ? disableMetadata() : initMetadata(true)
+                                }
+                            />
+                        </Tooltip>
                     </ActionColumn>
                 </SectionItem>
                 {metadata.enabled && metadata.provider && (
