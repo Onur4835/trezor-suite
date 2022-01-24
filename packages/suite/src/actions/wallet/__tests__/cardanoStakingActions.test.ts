@@ -51,7 +51,7 @@ const initStore = (state: State) => {
 };
 
 describe('cardanoStakingActions', () => {
-    it.skip('Add pending stake tx and clear it after tx is confirmed', async () => {
+    it('Add pending stake tx and clear it after tx is confirmed', async () => {
         const store = initStore(getInitialState());
 
         await store.dispatch(cardanoStakingActions.setPendingStakeTx(cardanoAccount, 'txid123'));
@@ -95,7 +95,7 @@ describe('cardanoStakingActions', () => {
         expect(noSoPendingTx).toEqual(undefined);
     });
 
-    it.skip('Add pending stake tx and clear it after TTL expires', async () => {
+    it('Add pending stake tx and clear it after TTL expires', async () => {
         const store = initStore(getInitialState());
 
         await store.dispatch(cardanoStakingActions.setPendingStakeTx(cardanoAccount, 'txid123'));
