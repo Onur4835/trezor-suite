@@ -241,6 +241,12 @@ const routes = [
         params: walletParams,
     },
     {
+        name: 'wallet-invity-aml',
+        pattern: '/accounts/invity/aml',
+        app: 'wallet',
+        params: walletParams,
+    },
+    {
         name: 'wallet-coinmarket-redirect',
         pattern: '/coinmarket-redirect',
         app: 'wallet',
