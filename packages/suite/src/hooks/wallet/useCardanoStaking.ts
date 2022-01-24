@@ -202,7 +202,7 @@ export const useCardanoStaking = (): CardanoStaking => {
                 protocolMagic: getProtocolMagic(account.symbol),
                 networkId: getNetworkId(account.symbol),
                 derivationType: derivationType.value,
-                ttl: getTtl(isTestnet(account.symbol)).toString(),
+                ttl: txPlan.ttl?.toString(),
                 ...(certificates.length > 0 ? { certificates } : {}),
                 ...(withdrawals.length > 0 ? { withdrawals } : {}),
             });
