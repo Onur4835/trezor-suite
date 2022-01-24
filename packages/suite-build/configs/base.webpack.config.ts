@@ -81,6 +81,8 @@ const config: webpack.Configuration = {
         maxAssetSize: 10 * 1000 * 1000,
         maxEntrypointSize: 1000 * 1000,
     },
+    // We are using WASM package - it's much faster (https://github.com/Emurgo/cardano-serialization-lib)
+    // This option makes it possible
     experiments: {
         asyncWebAssembly: true,
     },
