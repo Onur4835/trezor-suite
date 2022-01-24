@@ -117,10 +117,13 @@ const Arrow = styled.div`
 
 const SellTransaction = ({ trade, providers, account }: Props) => {
     const theme = useTheme();
-    const { goto, saveTransactionDetailId } = useActions({
-        goto: routerActions.goto,
-        saveTransactionDetailId: coinmarketSellActions.saveTransactionId,
-    });
+    const { goto, saveTransactionDetailId, setSellIsFromRedirect, saveSellQuoteRequest } =
+        useActions({
+            goto: routerActions.goto,
+            saveTransactionDetailId: coinmarketSellActions.saveTransactionId,
+            setSellIsFromRedirect: coinmarketSellActions.setIsFromRedirect,
+            saveSellQuoteRequest: coinmarketSellActions.saveQuoteRequest,
+        });
     useWatchSellTrade(account, trade);
 
     const { date, data } = trade;
@@ -133,8 +136,23 @@ const SellTransaction = ({ trade, providers, account }: Props) => {
         cryptoCurrency,
     } = data;
 
-    const viewDetail = async () => {
-        await saveTransactionDetailId(trade.key || '');
+    const viewDetail = () => {
+        saveTransactionDetailId(trade.key || '');
+        if (trade.data.status === 'SUBMITTED' || trade.data.status === 'SEND_CRYPTO') {
+            // continue to the sell flow
+            saveSellQuoteRequest({
+                amountInCrypto: trade.data.amountInCrypto || false,
+                fiatCurrency: trade.data.fiatCurrency || '',
+                cryptoCurrency: trade.data.cryptoCurrency || '',
+            });
+            setSellIsFromRedirect(true);
+            goto('wallet-coinmarket-sell-offers', {
+                symbol: account.symbol,
+                accountIndex: account.index,
+                accountType: account.accountType,
+            });
+            return;
+        }
         goto('wallet-coinmarket-sell-detail', {
             symbol: account.symbol,
             accountIndex: account.index,

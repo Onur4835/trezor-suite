@@ -929,6 +929,10 @@ export default defineMessages({
         defaultMessage: 'Trade in progress...',
         id: 'TR_SELL_DETAIL_PENDING_TITLE',
     },
+    TR_SELL_DETAIL_WAITING_FOR_SEND_CRYPTO: {
+        defaultMessage: 'Waiting for an address to send crypto to...',
+        id: 'TR_SELL_DETAIL_WAITING_FOR_SEND_CRYPTO',
+    },
     TR_SELL_DETAIL_PENDING_SUPPORT: {
         defaultMessage: "Open partner's support site",
         id: 'TR_SELL_DETAIL_PENDING_SUPPORT',

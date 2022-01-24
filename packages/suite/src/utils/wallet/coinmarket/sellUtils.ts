@@ -67,6 +67,7 @@ export const createQuoteLink = async (
     request: SellFiatTradeQuoteRequest,
     account: Account,
     composedInfo: ComposedTransactionInfo,
+    orderId?: string,
 ) => {
     const assetPrefix = process.env.ASSET_PREFIX || '';
     const locationOrigin = getLocationOrigin();
@@ -76,6 +77,9 @@ export const createQuoteLink = async (
         hash = `qc/${request.country}/${request.fiatCurrency}/${request.cryptoStringAmount}/${request.cryptoCurrency}`;
     } else {
         hash = `qf/${request.country}/${request.fiatCurrency}/${request.fiatStringAmount}/${request.cryptoCurrency}`;
+    }
+    if (orderId) {
+        hash = `p-${hash}/${orderId}`;
     }
     if (composedInfo.selectedFee && composedInfo.selectedFee !== 'normal') {
         hash += `/${composedInfo.selectedFee}`;

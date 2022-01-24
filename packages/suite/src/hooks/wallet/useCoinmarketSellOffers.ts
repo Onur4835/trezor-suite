@@ -12,6 +12,8 @@ import * as notificationActions from '@suite-actions/notificationActions';
 import { useCoinmarketRecomposeAndSign } from './useCoinmarketRecomposeAndSign ';
 import { useCoinmarketNavigation } from '@wallet-hooks/useCoinmarketNavigation';
 import { InvityAPIReloadQuotesAfterSeconds } from '@wallet-constants/coinmarket/metadata';
+import { getUnusedAddressFromAccount } from '@suite/utils/wallet/coinmarket/coinmarketUtils';
+import { TradeSell } from '@suite/types/wallet/coinmarketCommonTypes';
 
 export const useOffers = (props: Props) => {
     const timer = useTimer();
@@ -21,6 +23,7 @@ export const useOffers = (props: Props) => {
     const { isLocked } = useDevice();
     const [callInProgress, setCallInProgress] = useState<boolean>(isLocked || false);
     const [selectedQuote, setSelectedQuote] = useState<SellFiatTrade>();
+    const [trade, setTrade] = useState<TradeSell>();
     const [innerQuotes, setInnerQuotes] = useState<SellFiatTrade[] | undefined>(quotes);
     const [innerAlternativeQuotes, setInnerAlternativeQuotes] = useState<
         SellFiatTrade[] | undefined
@@ -49,11 +52,15 @@ export const useOffers = (props: Props) => {
 
     loadInvityData();
 
-    const { invityAPIUrl, isFromRedirect, sellInfo } = useSelector(state => ({
-        invityAPIUrl: state.suite.settings.debug.invityAPIUrl,
-        isFromRedirect: state.wallet.coinmarket.sell.isFromRedirect,
-        sellInfo: state.wallet.coinmarket.sell.sellInfo,
-    }));
+    const { invityAPIUrl, isFromRedirect, sellInfo, savedTransactionId, trades } = useSelector(
+        state => ({
+            invityAPIUrl: state.suite.settings.debug.invityAPIUrl,
+            isFromRedirect: state.wallet.coinmarket.sell.isFromRedirect,
+            sellInfo: state.wallet.coinmarket.sell.sellInfo,
+            savedTransactionId: state.wallet.coinmarket.sell.transactionId,
+            trades: state.wallet.coinmarket.trades,
+        }),
+    );
     if (invityAPIUrl) {
         invityAPI.setInvityAPIServer(invityAPIUrl);
     }
@@ -87,11 +94,22 @@ export const useOffers = (props: Props) => {
             return;
         }
 
-        if (isFromRedirect && quotesRequest) {
-            getQuotes();
+        if (isFromRedirect) {
+            if (savedTransactionId) {
+                const trade = trades.find(
+                    trade => trade.tradeType === 'sell' && trade.key === savedTransactionId,
+                ) as TradeSell;
+                if (trade) {
+                    setSelectedQuote(trade.data);
+                    setTrade(trade);
+                    setSellStep('SEND_TRANSACTION');
+                }
+            } else {
+                getQuotes();
+            }
+
             setIsFromRedirect(false);
         }
-
         if (!timer.isLoading && !timer.isStopped) {
             if (timer.resetCount >= 40) {
                 timer.stop();
@@ -101,13 +119,37 @@ export const useOffers = (props: Props) => {
                 getQuotes();
             }
         }
-    });
+    }, [
+        quotesRequest,
+        isFromRedirect,
+        timer,
+        navigateToSellForm,
+        savedTransactionId,
+        setIsFromRedirect,
+        getQuotes,
+        trades,
+    ]);
 
     const doSellTrade = async (quote: SellFiatTrade) => {
-        if (!quotesRequest) return;
+        const provider =
+            sellInfo?.providerInfos && quote.exchange
+                ? sellInfo.providerInfos[quote.exchange]
+                : undefined;
+        if (!quotesRequest || !provider) return;
         setCallInProgress(true);
-        const returnUrl = await createQuoteLink(quotesRequest, account, { selectedFee, composed });
-        const response = await invityAPI.doSellTrade({ trade: quote, returnUrl });
+        // orderId is part of the quote link if redirect to payment gate with a concrete quote
+        // without the orderId the return link will point to offers
+        const orderId = provider.flow === 'PAYMENT_GATE' ? quote.orderId : undefined;
+        const returnUrl = await createQuoteLink(
+            quotesRequest,
+            account,
+            { selectedFee, composed },
+            orderId,
+        );
+        const response = await invityAPI.doSellTrade({
+            trade: { ...quote, refundAddress: getUnusedAddressFromAccount(account).address },
+            returnUrl,
+        });
         setCallInProgress(false);
         if (response) {
             if (response.trade.error) {
@@ -120,8 +162,15 @@ export const useOffers = (props: Props) => {
             }
             if (
                 response.trade.status === 'LOGIN_REQUEST' ||
-                response.trade.status === 'SITE_ACTION_REQUEST'
+                response.trade.status === 'SITE_ACTION_REQUEST' ||
+                (response.trade.status === 'SUBMITTED' && provider.flow === 'PAYMENT_GATE')
             ) {
+                if (provider.flow === 'PAYMENT_GATE') {
+                    await saveTrade(response.trade, account, new Date().toISOString());
+                    await saveTransactionId(response.trade.orderId);
+                    setSelectedQuote(response.trade);
+                    setSellStep('SEND_TRANSACTION');
+                }
                 submitRequestForm(response.tradeForm?.form);
                 return undefined;
             }
@@ -222,6 +271,7 @@ export const useOffers = (props: Props) => {
         sendTransaction,
         callInProgress,
         selectedQuote,
+        trade,
         device,
         saveTrade,
         confirmTrade,
