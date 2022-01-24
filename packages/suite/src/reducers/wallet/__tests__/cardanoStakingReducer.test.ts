@@ -39,18 +39,14 @@ describe('cardanoStakingReducer reducer', () => {
                     pendingTx: [
                         {
                             accountKey: 'key',
-                            blockHeight: 1,
+                            ts: 1,
                             txid: 'txxid',
                         },
                     ],
                 },
                 {
                     type: CARDANO_STAKING.REMOVE_PENDING_STAKE_TX,
-                    pendingStakeTx: {
-                        accountKey: 'key',
-                        txid: 'txxid',
-                        blockHeight: 1,
-                    },
+                    accountKey: 'key',
                 } as any,
             ),
         ).toEqual({

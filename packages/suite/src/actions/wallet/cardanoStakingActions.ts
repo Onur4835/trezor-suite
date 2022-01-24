@@ -47,7 +47,7 @@ export const setPendingStakeTx =
     };
 
 export const validatePendingTxOnBlock =
-    (block: BlockchainBlock) => (dispatch: Dispatch, getState: GetState) => {
+    (block: BlockchainBlock, ts: number) => (dispatch: Dispatch, getState: GetState) => {
         // Used in cardano staking
         // After sending staking tx (delegation or withdrawal) user needs to wait few blocks til the tx appears on the blockchain.
         // To prevent the user from sending multiple staking tx we need to track that we are waiting for confirmation for the tx that was already sent.
@@ -68,18 +68,18 @@ export const validatePendingTxOnBlock =
                 .filter(tx => isPending(tx));
 
             accountPendingTransactions.forEach(tx => {
-                const ts = getUnixTime(new Date());
                 if (tx.blockTime && ts - tx.blockTime > 7200) {
                     // all txs from suite have ttl set to 2h
                     // tx will be rejected by the network if is not included in the blockchain in <2h
                     dispatch(transactionActions.remove(account, [tx]));
-
-                    const pendingStakeTx = dispatch(getPendingStakeTx(account));
-                    if (tx.txid === pendingStakeTx?.txid) {
-                        dispatch(setPendingStakeTx(account, null));
-                    }
                 }
             });
+
+            // separate pending tx used for nicer UI
+            const pendingStakeTx = dispatch(getPendingStakeTx(account));
+            if (pendingStakeTx && ts - pendingStakeTx.ts > 7200) {
+                dispatch(setPendingStakeTx(account, null));
+            }
         });
     };
 
