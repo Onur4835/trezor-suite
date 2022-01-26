@@ -8,7 +8,7 @@ import { Account } from '@wallet-types';
 import { ComposedTransactionInfo } from '@wallet-reducers/coinmarketReducer';
 import * as suiteActions from '@suite-actions/suiteActions';
 import { submitRequestForm as envSubmitRequestForm, isDesktop } from '@suite-utils/env';
-import type { WhoAmI } from '@wallet-components/InvityAuthentication';
+import type { InvityAuthentication } from '@wallet-types/invity';
 
 export type CoinmarketCommonAction =
     | {
@@ -24,8 +24,16 @@ export type CoinmarketCommonAction =
           type: typeof COINMARKET_COMMON.LOAD_DATA;
       }
     | {
+          type: typeof COINMARKET_COMMON.LOAD_INVITY_AUTHENTICATION;
+          redirectUnauthorizedUserToLogin: boolean;
+      }
+    | {
           type: typeof COINMARKET_COMMON.SAVE_INVITY_AUTHENTICATION;
-          invityAuthentication: WhoAmI;
+          invityAuthentication: InvityAuthentication;
+      }
+    | {
+          type: typeof COINMARKET_COMMON.SET_INVITY_AUTHENTICATION_LOADING;
+          isInvityAuthenticationLoading: boolean;
       };
 
 export const verifyAddress =
@@ -161,7 +169,19 @@ export const loadInvityData = () => ({
     type: COINMARKET_COMMON.LOAD_DATA,
 });
 
-export const saveInvityAuthentication = (invityAuthentication: WhoAmI) => ({
+export const loadInvityAuthentication = (redirectUnauthorizedUserToLogin: boolean) => ({
+    type: COINMARKET_COMMON.LOAD_INVITY_AUTHENTICATION,
+    redirectUnauthorizedUserToLogin,
+});
+
+export const saveInvityAuthentication = (
+    invityAuthentication: InvityAuthentication | undefined,
+) => ({
     type: COINMARKET_COMMON.SAVE_INVITY_AUTHENTICATION,
     invityAuthentication,
+});
+
+export const setInvityAuthenticationLoading = (isInvityAuthenticationLoading: boolean) => ({
+    type: COINMARKET_COMMON.SET_INVITY_AUTHENTICATION_LOADING,
+    isInvityAuthenticationLoading,
 });
