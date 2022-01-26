@@ -34,5 +34,6 @@ export const useCoinmarketNavigation = (account: Account) => {
         navigateToSellOffers: useNavigateToRouteName('wallet-coinmarket-sell-offers'),
 
         navigateToSavings: useNavigateToRouteName('wallet-coinmarket-savings'),
+        navigateToSavingsSetup: useNavigateToRouteName('wallet-coinmarket-savings-setup'),
     };
 };
