@@ -1,4 +1,4 @@
-import { TOR_URLS } from '@suite-constants/tor';
+import { TOR_URLS } from '@trezor/suite/src/constants/suite/tor';
 
 export const onionDomain = TOR_URLS['trezor.io'];
 

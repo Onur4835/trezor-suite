@@ -1,6 +1,6 @@
 import { nativeTheme, ipcMain } from 'electron';
 
-import { SuiteThemeVariantOptions } from '@suite-types';
+import { SuiteThemeVariantOptions } from '@trezor/suite/src/types/suite';
 import { getThemeSettings, setThemeSettings } from '@desktop-electron/libs/store';
 
 const setThemeManually = (theme: SuiteThemeVariantOptions) => {

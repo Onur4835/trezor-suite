@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 
-import { useActions, useSelector } from '@suite-hooks';
-import * as desktopUpdateActions from '@suite-actions/desktopUpdateActions';
-import { UpdateState } from '@suite-reducers/desktopUpdateReducer';
+import { useActions, useSelector } from '@trezor/suite/src/hooks/suite';
+import * as desktopUpdateActions from '@trezor/suite/src/actions/suite/desktopUpdateActions';
+import { UpdateState } from '@trezor/suite/src/reducers/suite/desktopUpdateReducer';
 import Available from './DesktopUpdater/Available';
 import Downloading from './DesktopUpdater/Downloading';
 import Ready from './DesktopUpdater/Ready';

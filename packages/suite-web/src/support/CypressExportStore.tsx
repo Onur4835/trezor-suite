@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Store } from '@suite-types';
+import { Store } from '@trezor/suite/src/types/suite';
 
 interface Props {
     store: Store;

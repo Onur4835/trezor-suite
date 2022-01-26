@@ -3,7 +3,7 @@
 
 import TrezorConnect, { Device, Features } from 'trezor-connect';
 import 'cypress-wait-until';
-import { Store, Action } from '@suite-types';
+import { Store, Action } from '@trezor/suite/src/types/suite';
 
 import {
     onboardingShouldLoad,

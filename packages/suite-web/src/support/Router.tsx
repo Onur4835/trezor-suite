@@ -1,8 +1,8 @@
 import React, { lazy, memo, Suspense } from 'react';
 import { Switch, Route } from 'react-router-dom';
 
-import routes from '@suite-constants/routes';
-import { BundleLoader } from '@suite-components';
+import routes from '@trezor/suite/src/constants/suite/routes';
+import { BundleLoader } from '@trezor/suite/src/components/suite';
 
 const components: { [key: string]: React.LazyExoticComponent<any> } = {
     'suite-index': lazy(() => import(/* webpackChunkName: "dashboard" */ '@suite/views/dashboard')),

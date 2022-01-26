@@ -1,8 +1,8 @@
 import React, { useContext } from 'react';
-import BaseTranslation from '@suite-components/Translation/components/BaseTranslation';
+import BaseTranslation from '@trezor/suite/src/components/suite/Translation/components/BaseTranslation';
 import HelperTooltip, {
     Props as HelperTooltipProps,
-} from '@suite-components/Translation/components/HelperTooltip';
+} from '@trezor/suite/src/components/suite/Translation/components/HelperTooltip';
 
 export const TranslationModeContext = React.createContext(false);
 

@@ -1,9 +1,9 @@
 import { app } from 'electron';
 import si from 'systeminformation';
 
-import { isDev } from '@suite-utils/build';
+import { isDev } from '@trezor/suite/src/utils/suite/build';
 import { b2t } from '@desktop-electron/libs/utils';
-import { toHumanReadable } from '@suite-utils/file';
+import { toHumanReadable } from '@trezor/suite/src/utils/suite/file';
 
 export const buildInfo = () => {
     global.logger.info('build', [

@@ -2,7 +2,7 @@ import path from 'path';
 import url from 'url';
 import { app, BrowserWindow, ipcMain } from 'electron';
 
-import { isDev } from '@suite-utils/build';
+import { isDev } from '@trezor/suite/src/utils/suite/build';
 import { PROTOCOL } from '@desktop-electron/libs/constants';
 import * as store from '@desktop-electron/libs/store';
 import { MIN_HEIGHT, MIN_WIDTH } from '@desktop-electron/libs/screen';

@@ -11,11 +11,11 @@ import {
     UpdateDownloadedEvent,
 } from 'electron-updater';
 
-import { isDev } from '@suite-utils/build';
+import { isDev } from '@trezor/suite/src/utils/suite/build';
 import { b2t } from '@desktop-electron/libs/utils';
 import { verifySignature } from '@desktop-electron/libs/update-checker';
-import { toHumanReadable } from '@suite-utils/file';
-import { isEnabled } from '@suite-utils/features';
+import { toHumanReadable } from '@trezor/suite/src/utils/suite/file';
+import { isEnabled } from '@trezor/suite/src/utils/suite/features';
 
 // Runtime flags
 const enableUpdater = app.commandLine.hasSwitch('enable-updater');

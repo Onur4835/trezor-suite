@@ -1,7 +1,7 @@
 import Store from 'electron-store';
 import { getInitialWindowSize } from './screen';
 
-import { SuiteThemeVariantOptions } from '@suite-types';
+import { SuiteThemeVariantOptions } from '@trezor/suite/src/types/suite';
 
 // creates config.json inside appData folder https://electronjs.org/docs/api/app#appgetpathname
 const store = new Store();

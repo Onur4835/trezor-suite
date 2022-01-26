@@ -4,9 +4,9 @@ import Layout from '../components/Layout';
 import Translation, { TranslationModeContext } from '../components/Translation';
 import Download from '../components/Download';
 import Feature from '../components/Feature';
-import { resolveStaticPath } from '@suite-utils/build';
-import Metadata from '@suite-components/Metadata';
-import { URLS } from '@suite-constants';
+import { resolveStaticPath } from '@trezor/suite/src/utils/suite/build';
+import Metadata from '@trezor/suite/src/components/suite/Metadata';
+import { URLS } from '@trezor/suite/src/constants/suite';
 import enLocale from '@trezor/suite-data/files/translations/en.json';
 import {
     Wrapper,

@@ -1,6 +1,6 @@
 import { app, shell, Menu, MenuItemConstructorOptions } from 'electron';
 
-import { isDev } from '@suite-utils/build';
+import { isDev } from '@trezor/suite/src/utils/suite/build';
 
 const isMac = process.platform === 'darwin';
 

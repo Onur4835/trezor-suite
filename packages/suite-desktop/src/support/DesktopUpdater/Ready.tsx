@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import styled from 'styled-components';
 
 import { Button, H2, variables } from '@trezor/components';
-import { Translation, Modal } from '@suite-components';
+import { Translation, Modal } from '@trezor/suite/src/components/suite';
 import { Row, LeftCol, RightCol, Divider } from './styles';
 
 const Description = styled.span`

@@ -1,11 +1,11 @@
 import React, { useCallback, useState } from 'react';
 
 import { Button } from '@trezor/components';
-import { Translation, Modal, Image, TrezorLink } from '@suite-components';
-import { useAnalytics } from '@suite-hooks';
+import { Translation, Modal, Image, TrezorLink } from '@trezor/suite/src/components/suite';
+import { useAnalytics } from '@trezor/suite/src/hooks/suite';
 import styled from 'styled-components';
 import { ImageWrapper, ButtonWrapper, Description, LeftCol, RightCol, Title } from './styles';
-import { SUITE_URL } from '@suite-constants/urls';
+import { SUITE_URL } from '@trezor/suite/src/constants/suite/urls';
 
 export const Link = styled(TrezorLink)`
     width: 100%;

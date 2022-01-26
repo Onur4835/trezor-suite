@@ -1,10 +1,10 @@
 import Document, { DocumentContext, Html, Head, Main, NextScript } from 'next/document';
 import React from 'react';
-import { resolveStaticPath } from '@suite-utils/build';
+import { resolveStaticPath } from '@trezor/suite/src/utils/suite/build';
 import { ServerStyleSheet } from 'styled-components';
 import globalStyles from '../support/styles';
-import { isEnabled } from '@suite-utils/features';
-import { TOR_URLS } from '@suite-constants/tor';
+import { isEnabled } from '@trezor/suite/src/utils/suite/features';
+import { TOR_URLS } from '@trezor/suite/src/constants/suite/tor';
 
 const isOnionLocation = isEnabled('ONION_LOCATION_META');
 

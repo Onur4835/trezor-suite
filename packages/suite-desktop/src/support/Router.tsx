@@ -1,10 +1,10 @@
 import React, { memo } from 'react';
 import { Switch, Route } from 'react-router-dom';
 
-import routes from '@suite-constants/routes';
+import routes from '@trezor/suite/src/constants/suite/routes';
 
-import Index from '@suite/views/dashboard';
-import Notification from '@suite-views/notifications';
+import Index from '@trezor/suite/src/views/dashboard';
+import Notification from '@trezor/suite/src/views/suite/notifications';
 
 import Wallet from '@wallet-views/transactions';
 import WalletReceive from '@wallet-views/receive';

@@ -1,4 +1,4 @@
-import { Action } from '@suite-types';
+import { Action } from '@trezor/suite/src/types/suite';
 
 /**
  * Clears database. Use it to avoid persistence between tests

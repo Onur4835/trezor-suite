@@ -4,8 +4,8 @@ import { Button, Dropdown, Icon, colors, variables, Link } from '@trezor/compone
 import { IconType } from '@trezor/components/src/support/types';
 import Translation from '../Translation';
 import { Platform, getPlatform } from '../../utils/navigator';
-import { normalizeVersion } from '@suite-utils/build';
-import { SL_SIGNING_KEY, WIKI_HOW_TO_RUN } from '@suite-constants/urls';
+import { normalizeVersion } from '@trezor/suite/src/utils/suite/build';
+import { SL_SIGNING_KEY, WIKI_HOW_TO_RUN } from '@trezor/suite/src/constants/suite/urls';
 
 const StyledDropdown = styled(Dropdown)`
     & ul {

@@ -3,13 +3,13 @@ import styled from 'styled-components';
 import ReactMarkdown from 'react-markdown';
 
 import { Button, H2, variables, Link } from '@trezor/components';
-import { Translation, Modal, FormattedDate } from '@suite-components';
+import { Translation, Modal, FormattedDate } from '@trezor/suite/src/components/suite';
 import { Row, LeftCol, RightCol, Divider } from './styles';
-import { useActions } from '@suite-hooks';
+import { useActions } from '@trezor/suite/src/hooks/suite';
 
-import { getReleaseNotes, getReleaseUrl } from '@suite/services/github';
-import type { UpdateInfo } from '@suite-types/desktop';
-import * as desktopUpdateActions from '@suite-actions/desktopUpdateActions';
+import { getReleaseNotes, getReleaseUrl } from '@trezor/suite/src/services/github';
+import type { UpdateInfo } from '@trezor/suite/src/types/suite/desktop';
+import * as desktopUpdateActions from '@trezor/suite/src/actions/suite/desktopUpdateActions';
 
 const GreenH2 = styled(H2)`
     text-align: left;
@@ -48,8 +48,8 @@ const ChangelogWrapper = styled.div`
         line-height: 1.57;
     }
 
-    /* 
-    Styling similar to  Link component. 
+    /*
+    Styling similar to  Link component.
     It seems overriding via linkReference renderer doesn't work for some reason
     */
     a {

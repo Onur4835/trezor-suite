@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import openpgp from 'openpgp';
 
-import { getReleaseNotes } from '@suite/services/github';
+import { getReleaseNotes } from '@trezor/suite/src/services/github';
 
 const signingKey = process.env.APP_PUBKEY;
 

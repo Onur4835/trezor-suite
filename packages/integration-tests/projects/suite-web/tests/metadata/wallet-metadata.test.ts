@@ -1,7 +1,7 @@
 // @group:metadata
 // @retry=2
 
-import firmware from '@suite/middlewares/firmware';
+import firmware from '@trezor/suite/src/middlewares/firmware';
 import { rerouteMetadataToMockProvider, stubOpen } from '../../stubs/metadata';
 
 const firmwares = ['2.2.0', '2-master'] as const;

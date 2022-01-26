@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 import { H2, variables } from '@trezor/components';
-import { Translation, Modal } from '@suite-components';
+import { Translation, Modal } from '@trezor/suite/src/components/suite';
 import { Row } from './styles';
 
-import { toHumanReadable } from '@suite-utils/file';
-import { UpdateProgress } from '@suite-types/desktop';
+import { toHumanReadable } from '@trezor/suite/src/utils/suite/file';
+import { UpdateProgress } from '@trezor/suite/src/types/suite/desktop';
 
 const ModalHeadingWrapper = styled.div`
     display: flex;

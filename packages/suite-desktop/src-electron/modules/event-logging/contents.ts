@@ -1,6 +1,6 @@
 import { app } from 'electron';
 
-import { isDev } from '@suite-utils/build';
+import { isDev } from '@trezor/suite/src/utils/suite/build';
 
 const logUI = app.commandLine.hasSwitch('log-ui');
 

@@ -2,8 +2,8 @@ import React, { useCallback, useState } from 'react';
 import styled from 'styled-components';
 
 import { Button, P, Tooltip } from '@trezor/components';
-import { CheckItem, Translation, Modal, Image } from '@suite-components';
-import { useAnalytics } from '@suite-hooks';
+import { CheckItem, Translation, Modal, Image } from '@trezor/suite/src/components/suite';
+import { useAnalytics } from '@trezor/suite/src/hooks/suite';
 import {
     ImageWrapper,
     ButtonWrapper,
