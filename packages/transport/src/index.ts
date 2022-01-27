@@ -1,4 +1,4 @@
-import BridgeTransportV2 from './bridge/v2';
+import { BridgeTransport } from './transports/bridge';
 import LowlevelTransportWithSharedConnections from './lowlevel/withSharedConnections';
 import FallbackTransport from './fallback';
 import WebUsbPlugin from './lowlevel/webusb';
@@ -22,7 +22,7 @@ export type {
 } from './types';
 
 export default {
-    BridgeV2: BridgeTransportV2,
+    BridgeV2: BridgeTransport,
     Fallback: FallbackTransport,
     Lowlevel: LowlevelTransportWithSharedConnections,
     WebUsb: WebUsbPlugin,

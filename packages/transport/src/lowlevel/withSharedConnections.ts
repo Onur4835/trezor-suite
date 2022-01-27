@@ -334,7 +334,7 @@ export default class LowlevelTransportWithSharedConnections {
         }
         const sessionsMM = debugLink ? sessionsM.debugSessions : sessionsM.normalSessions;
 
-        let path_: string = null;
+        let path_: string | null = null;
         Object.keys(sessionsMM).forEach(kpath => {
             if (sessionsMM[kpath] === session) {
                 path_ = kpath;
@@ -448,13 +448,10 @@ export default class LowlevelTransportWithSharedConnections {
         delete this.defereds[m.id];
     }
 
-    setBridgeLatestUrl(url: string): void {}
-    setBridgeLatestVersion(version: string): void {}
-
     isOutdated = false;
 
     stop(): void {
         this.stopped = true;
-        this.sharedWorker = null;
+        this.sharedWorker = undefined;
     }
 }

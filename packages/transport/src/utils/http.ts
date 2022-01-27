@@ -1,34 +1,33 @@
 export type HttpRequestOptions = {
-    body?: Array<any> | Object | string;
     url: string;
-    method: 'POST' | 'GET';
+    // todo: method should be required
+    method?: 'POST' | 'GET';
     skipContentTypeHeader?: boolean;
+    // todo: narrow
+    body?: null | Record<string, unknown> | Record<string, unknown>[] | string;
 };
 
-// slight hack to make Flow happy, but to allow Node to set its own fetch
-// Request, RequestOptions and Response are built-in types of Flow for fetch API
-let _fetch: (input: string | Request, init?: any) => Promise<Response> =
-    typeof window === `undefined` ? () => Promise.reject() : window.fetch;
-
-let _isNode = false;
+// todo: maybe better
+let localFetch = typeof window !== 'undefined' ? window.fetch : undefined;
+const isNode = false;
 
 export function setFetch(fetch: any, isNode?: boolean) {
-    _fetch = fetch;
-    _isNode = !!isNode;
+    localFetch = fetch;
+    isNode = !!isNode;
 }
 
 function contentType(body: any): string {
-    if (typeof body === `string`) {
-        if (body === ``) {
-            return `text/plain`;
+    if (typeof body === 'string') {
+        if (body === '') {
+            return 'text/plain';
         }
-        return `application/octet-stream`;
+        return 'application/octet-stream';
     }
-    return `application/json`;
+    return 'application/json';
 }
 
 function wrapBody(body: any) {
-    if (typeof body === `string`) {
+    if (typeof body === 'string') {
         return body;
     }
     return JSON.stringify(body);
@@ -46,7 +45,8 @@ export async function request(options: HttpRequestOptions) {
     const fetchOptions = {
         method: options.method,
         body: wrapBody(options.body),
-        credentials: `same-origin`,
+        // todo: consider 'omit' ?
+        credentials: 'same-origin' as const,
         headers: {},
     };
 
@@ -54,27 +54,32 @@ export async function request(options: HttpRequestOptions) {
     if (options.skipContentTypeHeader == null || options.skipContentTypeHeader === false) {
         fetchOptions.headers = {
             ...fetchOptions.headers,
-            'Content-Type': contentType(options.body == null ? `` : options.body),
+            'Content-Type': contentType(options.body == null ? '' : options.body),
         };
     }
 
     // Node applications must spoof origin for bridge CORS
-    if (_isNode) {
+    if (isNode) {
         fetchOptions.headers = {
             ...fetchOptions.headers,
-            Origin: `https://node.trezor.io`,
+            Origin: 'https://node.trezor.io',
         };
     }
 
-    const res = await _fetch(options.url, fetchOptions);
+    if (!localFetch) {
+        throw new Error('fetch not set');
+    }
+    const res = await localFetch(options.url, fetchOptions);
+    console.log('res', res);
     const resText = await res.text();
     if (res.ok) {
         return parseResult(resText);
     }
     const resJson = parseResult(resText);
-    if (typeof resJson === `object` && resJson != null && resJson.error != null) {
+    if (typeof resJson === 'object' && resJson != null && resJson.error != null) {
         throw new Error(resJson.error);
     } else {
+        console.log('res ', resText);
         throw new Error(resText);
     }
 }
