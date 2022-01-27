@@ -7,16 +7,37 @@ const BIP32_VERSIONS = {
     0x0488b21e: {
         type: 'pkh',
         purpose: "44'",
+        coinType: "0'",
     },
     // 77429938, ypub
     0x049d7cb2: {
         type: 'shwpkh',
         purpose: "49'",
+        coinType: "0'",
     },
     // 78792518, zpub
     0x04b24746: {
         type: 'wpkh',
         purpose: "84'",
+        coinType: "0'",
+    },
+    // 70617039, tpub
+    0x043587cf: {
+        type: 'pkh',
+        purpose: "44'",
+        coinType: "1'",
+    },
+    // 71979618, upub
+    0x044a5262: {
+        type: 'shwpkh',
+        purpose: "49'",
+        coinType: "1'",
+    },
+    // 73342198, vpub
+    0x045f1cf6: {
+        type: 'wpkh',
+        purpose: "84'",
+        coinType: "1'",
     },
 } as const;
 
@@ -27,20 +48,23 @@ const validateVersion = (version: number): version is Version =>
 
 type PaymentType = typeof BIP32_VERSIONS[Version]['type'] | 'tr';
 
-const getPubkeyToPayment = (type: PaymentType) => (pubkey: Buffer) => {
+const getPubkeyToPayment = (type: PaymentType, coinType: string) => (pubkey: Buffer) => {
+    const network = coinType === "1'" ? networks.regtest : undefined;
     switch (type) {
         case 'pkh':
-            return payments.p2pkh({ pubkey });
+            return payments.p2pkh({ pubkey, network });
         case 'shwpkh':
             return payments.p2sh({
                 redeem: payments.p2wpkh({
                     pubkey,
+                    network,
                 }),
+                network,
             });
         case 'wpkh':
-            return payments.p2wpkh({ pubkey });
+            return payments.p2wpkh({ pubkey, network });
         case 'tr':
-            return payments.p2tr({ pubkey });
+            return payments.p2tr({ pubkey, network });
         default:
             throw new Error(`Unknown payment type '${type}'`);
     }
@@ -49,7 +73,7 @@ const getPubkeyToPayment = (type: PaymentType) => (pubkey: Buffer) => {
 const parseDescriptor = (descriptor: string) => {
     const [_match, _script, _fingerprint, purpose, coinType, account, xpub] =
         descriptor.match(
-            /^([a-z]+\()+\[([a-z0-9]{8})\/([0-9]{2}'?)\/([01]'?)\/([0-9]+'?)\]([xyz]pub[a-zA-Z0-9]*)\/<0;1>\/\*\)+$/
+            /^([a-z]+\()+\[([a-z0-9]{8})\/([0-9]{2}'?)\/([01]'?)\/([0-9]+'?)\]([xyztuv]pub[a-zA-Z0-9]*)\/<0;1>\/\*\)+$/
         ) || fail(`Descriptor cannot be parsed: ${descriptor}`);
     return {
         purpose,
@@ -69,7 +93,7 @@ const getXpubDefaults = (xpub: string) => {
 };
 
 const getXpubInfo = (xpub: string) => {
-    const { version, purpose, type } = getXpubDefaults(xpub);
+    const { version, purpose, type, coinType } = getXpubDefaults(xpub);
     const node = bip32.fromBase58(xpub, {
         ...networks.bitcoin,
         bip32: {
@@ -77,7 +101,6 @@ const getXpubInfo = (xpub: string) => {
             public: version,
         },
     });
-    const coinType = "0'";
     // eslint-disable-next-line
     const account = `${(node.index << 1) >>> 1}'`; // Unsigned to signed conversion
     return {
@@ -130,7 +153,7 @@ export const deriveAddresses = (
     path: string;
 }[] => {
     const { purpose, coinType, account, node, paymentType } = recognizeDescriptor(descriptor);
-    const getAddress = getPubkeyToPayment(paymentType);
+    const getAddress = getPubkeyToPayment(paymentType, coinType);
     const change = type === 'receive' ? 0 : 1;
     const changeNode = node.derive(change);
     return Array.from(Array(count).keys())
