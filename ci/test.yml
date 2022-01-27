@@ -13,7 +13,7 @@
     TRACK_SUITE_URL: https://track-suite.herokuapp.com
     ## when debugging or developing tests it does not make sense to have retries,
     ## in other cases retries are useful to avoid occasional failures due to flaky tests
-    ALLOW_RETRY: 1
+    # ALLOW_RETRY: 1
   before_script:
     - docker login $CI_DEPENDENCY_PROXY_SERVER -u $CI_DEPENDENCY_PROXY_USER -p $CI_DEPENDENCY_PROXY_PASSWORD
   script:
@@ -48,13 +48,13 @@
 suite web:
   extends: .e2e web
 
-suite web snapshots:
-  extends: .e2e web
-  needs: ['install'] # make it available sooner
-  when: manual
-  variables:
-    CYPRESS_SNAPSHOT: 1
-    CYPRESS_updateSnapshots: 1
+# suite web snapshots:
+#   extends: .e2e web
+#   needs: ['install'] # make it available sooner
+#   when: manual
+#   variables:
+#     CYPRESS_SNAPSHOT: 1
+#     CYPRESS_updateSnapshots: 1
 
 # Nightly tests against latest trezor-firmware master
 suite web nightly:
