@@ -1,6 +1,9 @@
 # @trezor/suite-web
 .e2e web:
   stage: integration testing
+  needs:
+    - suite-web deploy dev
+    - suite-web-landing deploy dev
   variables:
     COMPOSE_PROJECT_NAME: $CI_JOB_ID
     COMPOSE_FILE: ./docker/docker-compose.suite-ci.yml
@@ -70,6 +73,8 @@ suite web nightly:
 # @trezor/suite-desktop
 .e2e desktop:
   stage: integration testing
+  needs:
+    - suite-desktop build linux
   variables:
     COMPOSE_FILE: ./docker/docker-compose.suite-desktop-ci.yml
   before_script:
@@ -124,6 +129,8 @@ rollout:
 # @trezor/transport
 .e2e transport:
   stage: integration testing
+  needs:
+    - unit tests
   variables:
     COMPOSE_FILE: ./docker/docker-compose.transport-test.yml
   script:
@@ -146,6 +153,8 @@ transport nightly:
 # @trezor/blockchain-link
 .e2e blockchain-link:
   stage: integration testing
+  needs:
+    - unit tests
   script:
     - yarn install --frozen-lockfile --cache-folder .yarn --prefer-offline
     - yarn workspace @trezor/blockchain-link build:lib
