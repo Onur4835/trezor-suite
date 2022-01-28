@@ -1,4 +1,4 @@
-import { request as http, setFetch as rSetFetch, HttpRequestOptions } from '../utils/http';
+import { request as http, setFetch, HttpRequestOptions } from '../utils/http';
 import * as check from '../utils/highlevel-checks';
 import { semverCompare } from '../utils/semver-compare';
 import { buildOne } from '../lowlevel/send';
@@ -6,6 +6,7 @@ import { receiveOne } from '../lowlevel/receive';
 import { DEFAULT_URL, DEFAULT_VERSION_URL } from '../config';
 import type { AcquireInput, TrezorDeviceInfoWithSession } from '../types';
 import { AbstractTransport } from './abstract';
+import { success, error } from '../utils/response';
 
 class BridgeTransport extends AbstractTransport {
     name = 'BridgeTransport';
@@ -17,7 +18,7 @@ class BridgeTransport extends AbstractTransport {
     bridgeVersion?: string;
     debug = false;
 
-    configured = false;
+    // configured = false;
 
     stopped = false;
 
@@ -27,10 +28,9 @@ class BridgeTransport extends AbstractTransport {
         this.newestVersionUrl = newestVersionUrl;
     }
 
-    _post(options: HttpRequestOptions) {
+    private _post(options: HttpRequestOptions) {
         if (this.stopped) {
-            // eslint-disable-next-line prefer-promise-reject-errors
-            return Promise.reject('Transport stopped.');
+            return { success: false as const, error: 'Transport stopped.' };
         }
         return http({
             ...options,
@@ -40,73 +40,103 @@ class BridgeTransport extends AbstractTransport {
         });
     }
 
-    async init(debug = false): Promise<void> {
-        this.debug = debug;
-        await this._silentInit();
+    private _acquireMixed(input: AcquireInput, debugLink?: boolean) {
+        const previousStr = input.previous == null ? 'null' : input.previous;
+        const url = `${debugLink ? '/debug' : ''}/acquire/${input.path}/${previousStr}`;
+        return this._post({ url });
     }
 
-    async _silentInit(): Promise<void> {
+    private async _silentInit() {
         const infoS = await http({
             url: this.url,
             method: 'POST',
         });
         const info = check.info(infoS);
         this.version = info.version;
-        const newVersion =
-            typeof this.bridgeVersion === 'string'
-                ? this.bridgeVersion
-                : check.version(
-                      await http({
-                          url: `${this.newestVersionUrl}?${Date.now()}`,
-                          method: 'GET',
-                      }),
-                  );
+
+        let newVersion: string | undefined;
+
+        if (this.bridgeVersion) {
+            newVersion = this.bridgeVersion;
+        } else {
+            const res = await http({
+                url: `${this.newestVersionUrl}?${Date.now()}`,
+                method: 'GET',
+            });
+            if (!res.success) {
+                return res;
+                // return;
+            }
+            if (typeof res.payload !== 'string') {
+                // todo:
+                return { success: false as const, error: 'wrong response type' };
+            }
+            newVersion = res.payload;
+        }
+
         this.isOutdated = semverCompare(this.version, newVersion) < 0;
+        return { success: true as const, payload: 'initialized' };
     }
 
-    async listen(old?: TrezorDeviceInfoWithSession[]): Promise<TrezorDeviceInfoWithSession[]> {
+    async init(debug = false) {
+        this.debug = debug;
+        return this._silentInit();
+    }
+
+    // todo: required param
+    async listen(old?: TrezorDeviceInfoWithSession[]) {
         if (!old) {
-            throw new Error('Bridge v2 does not support listen without previous.');
+            return {
+                success: false as const,
+                error: 'Bridge v2 does not support listen without previous.',
+            };
         }
         const devicesS = await this._post({
             url: '/listen',
             body: old,
         });
-        const devices = check.devices(devicesS);
-        return devices;
+        return check.listen(devicesS);
     }
 
-    async enumerate(): Promise<Array<TrezorDeviceInfoWithSession>> {
-        const devicesS = await this._post({ url: '/enumerate' });
-        const devices = check.devices(devicesS);
-        return devices;
-    }
-
-    _acquireMixed(input: AcquireInput, debugLink?: boolean) {
-        const previousStr = input.previous == null ? 'null' : input.previous;
-        const url = `${debugLink ? '/debug' : ''}/acquire/${input.path}/${previousStr}`;
-        return this._post({ url });
+    async enumerate() {
+        const response = await this._post({ url: '/enumerate' });
+        if (!response.success) {
+            return response;
+        }
+        return check.enumerate(response.payload);
     }
 
     async acquire(input: AcquireInput, debugLink?: boolean) {
-        const acquireS = await this._acquireMixed(input, debugLink);
-        return check.acquire(acquireS);
+        const response = await this._acquireMixed(input, debugLink);
+        if (!response.success) {
+            return response;
+        }
+        return check.acquire(response.payload);
     }
 
     async release(session: string, onclose: boolean, debugLink?: boolean) {
-        const res = this._post({
+        const response = this._post({
             url: `${debugLink ? '/debug' : ''}/release/${session}`,
         });
         if (onclose) {
-            return;
+            // todo:
+            // return;
+            return { success: true as const, payload: 'what is this for?' };
         }
-        await res;
+        const res = await response;
+        if (!res.success) {
+            return res;
+        }
+        if (typeof res.payload !== 'string') {
+            throw new Error('eow');
+        }
+        return { success: res.success, payload: res.payload };
     }
 
     async call(session: string, name: string, data: Record<string, unknown>, debugLink?: boolean) {
         // todo: maybe move messages to constructor?
         if (!this.messages) {
-            throw new Error('Transport not configured.');
+            return { success: false as const, error: 'Transport not configured.' };
         }
         const o = buildOne(this.messages, name, data);
         const outData = o.toString('hex');
@@ -115,7 +145,7 @@ class BridgeTransport extends AbstractTransport {
             body: outData,
         });
         if (typeof resData !== 'string') {
-            throw new Error('Returning data is not string.');
+            return { success: false as const, error: 'Returning data is not string.' };
         }
         const jsonData = receiveOne(this.messages, resData);
         return check.call(jsonData);
@@ -123,39 +153,54 @@ class BridgeTransport extends AbstractTransport {
 
     async post(session: string, name: string, data: Record<string, unknown>, debugLink?: boolean) {
         if (!this.messages) {
-            throw new Error('Transport not configured.');
+            return { success: false as const, error: 'Transport not configured.' };
         }
         const outData = buildOne(this.messages, name, data).toString('hex');
-        await this._post({
+        const response = await this._post({
             url: `${debugLink ? '/debug' : ''}/post/${session}`,
             body: outData,
         });
+
+        if (!response.success) {
+            return response;
+        }
+
+        if (typeof response.payload !== 'string') {
+            throw new Error('eow');
+        }
+        return { success: response.success, payload: response.payload };
     }
 
     async read(session: string, debugLink?: boolean) {
         if (!this.messages) {
-            throw new Error('Transport not configured.');
+            // todo:
+            return { success: false as const, error: 'Transport not configured.' };
         }
         const resData = await this._post({
             url: `${debugLink ? '/debug' : ''}/read/${session}`,
         });
         if (typeof resData !== 'string') {
-            throw new Error('Returning data is not string.');
+            // todo:
+            return { success: false as const, error: 'Response is not string.' };
         }
         const jsonData = receiveOne(this.messages, resData);
-        return check.call(jsonData);
+        const checked = check.call(jsonData);
+        if (!checked.success) {
+            return { success: false as const, error: checked.error };
+        }
+        return { success: true as const, payload: checked.payload };
     }
 
     static setFetch(fetch: any, isNode?: boolean) {
-        rSetFetch(fetch, isNode);
+        setFetch(fetch, isNode);
     }
 
     // todo: not used?
-    requestDevice() {
-        return Promise.reject();
-    }
+    // requestDevice() {
+    //     return Promise.reject();
+    // }
 
-    requestNeeded = false;
+    // requestNeeded = false;
 
     setBridgeLatestUrl(url: string) {
         this.newestVersionUrl = url;

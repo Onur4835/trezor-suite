@@ -9,6 +9,9 @@ import type { INamespace } from 'protobufjs/light';
 
 import { parseConfigure } from '../lowlevel/protobuf/messages';
 
+type Success<Payload> = { success: true; payload: Payload };
+type Error = { success: false; error: string };
+type Response<Payload> = Promise<Success<Payload> | Error>;
 export abstract class AbstractTransport {
     configured = false;
     stopped = false;
@@ -20,21 +23,21 @@ export abstract class AbstractTransport {
     // isOutdated: boolean;
     // activeName?: string;
 
-    abstract enumerate(): Promise<TrezorDeviceInfoWithSession[]>;
-    abstract listen(old?: TrezorDeviceInfoWithSession[]): Promise<TrezorDeviceInfoWithSession[]>;
-    abstract acquire(input: AcquireInput, debugLink?: boolean): Promise<string>;
-    abstract release(session: string, onclose: boolean, debugLink?: boolean): Promise<void>;
+    abstract enumerate(): Response<TrezorDeviceInfoWithSession[]>;
+    abstract listen(old?: TrezorDeviceInfoWithSession[]): Response<TrezorDeviceInfoWithSession[]>;
+    abstract acquire(input: AcquireInput, debugLink?: boolean): Response<string>;
+    abstract release(session: string, onclose: boolean, debugLink?: boolean): Response<string>;
     abstract call(
         session: string,
         name: string,
         data: Object,
         debugLink?: boolean,
-    ): Promise<MessageFromTrezor>;
-    abstract post(session: string, name: string, data: Object, debugLink?: boolean): Promise<void>;
-    abstract read(session: string, debugLink?: boolean): Promise<MessageFromTrezor>;
+    ): Response<MessageFromTrezor>;
+    abstract post(session: string, name: string, data: Object, debugLink?: boolean): Response<string>;
+    abstract read(session: string, debugLink?: boolean): Response<MessageFromTrezor>;
     // resolves when the transport can be used; rejects when it cannot
 
-    abstract init(debug?: boolean): Promise<void>;
+    abstract init(debug?: boolean): Response<string>;
 
     // setBridgeLatestUrl(url: string): void;
     // setBridgeLatestVersion(version: string): void;

@@ -35,6 +35,8 @@
         "bytebuffer": "^5.0.1",
         "json-stable-stringify": "^1.0.1",
         "long": "^4.0.0",
-        "protobufjs": "^6.11.2"
+        "protobufjs": "^6.11.2",
+        "typeforce": "^1.18.0"
+
     }
 }

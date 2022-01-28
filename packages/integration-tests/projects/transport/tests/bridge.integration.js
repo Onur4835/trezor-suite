@@ -30,12 +30,13 @@ describe('bridge', () => {
     test('enumerate - acquire - getFeatures', async () => {
         BridgeV2.setFetch(fetch, true);
 
-        const bridge = new BridgeV2(null, null);
-        await bridge.init(false);
+        const bridge = new BridgeV2();
+        await bridge.init();
         await bridge.configure(messages);
 
         const devices = await bridge.enumerate();
-
+        console.log('devices', devices);
+        
         expect(devices).toEqual([
             {
                 path: '1',
@@ -51,6 +52,35 @@ describe('bridge', () => {
 
         const message = await bridge.call(session, 'GetFeatures', {});
 
+        // expect(message).toMatchObject({
+        //     type: 'Features',
+        //     message: {
+        //         vendor: 'trezor.io',
+        //         label: 'TrezorT',
+        //     },
+        // });
+    });
+
+    test('sessions stealing', async () => {
+        BridgeV2.setFetch(fetch, true);
+
+        const client1 = new BridgeV2();
+        const client2 = new BridgeV2();
+
+        await client1.init();
+        await client2.init();
+
+        client1.configure(messages);
+        client2.configure(messages);
+
+        const devices = await client1.enumerate();
+
+        const session1 = await client1.acquire({ path: devices[0].path });
+
+        console.log('session1', session1);
+
+        let message = await client1.call(session1, 'GetFeatures', {});
+
         expect(message).toMatchObject({
             type: 'Features',
             message: {
@@ -58,5 +88,15 @@ describe('bridge', () => {
                 label: 'TrezorT',
             },
         });
+
+        const session2 = await client2.acquire({ path: devices[0].path });
+
+        console.log('session2', session2);
+
+        message = await client2.call(session2, 'GetFeatures', {});
+
+        console.log('message', message);
+        // const session1 = await client1.acquire({ path: devices[0].path });
+
     });
 });

@@ -1,3 +1,5 @@
+import { MessageFromTrezor } from "..";
+
 export type HttpRequestOptions = {
     url: string;
     // todo: method should be required
@@ -9,11 +11,11 @@ export type HttpRequestOptions = {
 
 // todo: maybe better
 let localFetch = typeof window !== 'undefined' ? window.fetch : undefined;
-const isNode = false;
+let isNode = false;
 
-export function setFetch(fetch: any, isNode?: boolean) {
+export function setFetch(fetch: typeof window.fetch, node = false) {
     localFetch = fetch;
-    isNode = !!isNode;
+    isNode = node;
 }
 
 function contentType(body: any): string {
@@ -33,14 +35,6 @@ function wrapBody(body: any) {
     return JSON.stringify(body);
 }
 
-function parseResult(text: string) {
-    try {
-        return JSON.parse(text);
-    } catch (e) {
-        return text;
-    }
-}
-
 export async function request(options: HttpRequestOptions) {
     const fetchOptions = {
         method: options.method,
@@ -51,7 +45,7 @@ export async function request(options: HttpRequestOptions) {
     };
 
     // this is just for flowtype
-    if (options.skipContentTypeHeader == null || options.skipContentTypeHeader === false) {
+    if (!options.skipContentTypeHeader) {
         fetchOptions.headers = {
             ...fetchOptions.headers,
             'Content-Type': contentType(options.body == null ? '' : options.body),
@@ -67,19 +61,23 @@ export async function request(options: HttpRequestOptions) {
     }
 
     if (!localFetch) {
-        throw new Error('fetch not set');
+        return { success: false as const, error: 'fetch not set' };
     }
+
     const res = await localFetch(options.url, fetchOptions);
-    console.log('res', res);
-    const resText = await res.text();
-    if (res.ok) {
-        return parseResult(resText);
+
+    if (!res.ok) {
+        return { success: false as const, error: 'todo: error' };
     }
-    const resJson = parseResult(resText);
-    if (typeof resJson === 'object' && resJson != null && resJson.error != null) {
-        throw new Error(resJson.error);
-    } else {
-        console.log('res ', resText);
-        throw new Error(resText);
+
+    const resText = await res.text();
+
+    try {
+        const json = await JSON.parse(resText);
+
+        return { success: true as const, payload: json as MessageFromTrezor };
+    } catch (err) {
+
+        return { success: true as const, payload: resText };
     }
 }
