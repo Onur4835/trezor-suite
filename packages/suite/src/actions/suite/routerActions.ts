@@ -15,7 +15,7 @@ import {
 import { Dispatch, GetState, Route } from '@suite-types';
 import history from '@suite/support/history';
 
-interface LocationChange {
+export interface LocationChange {
     type: typeof ROUTER.LOCATION_CHANGE;
     payload: {
         url: string;

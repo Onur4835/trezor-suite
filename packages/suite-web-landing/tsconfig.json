@@ -8,8 +8,22 @@
         "forceConsistentCasingInFileNames": true,
         "esModuleInterop": true,
         "resolveJsonModule": true,
-        "isolatedModules": true
+        "isolatedModules": true, // required by Babel + Next
+        // composite project
+        "composite": true,
+        "declaration": true,
+        "declarationMap": true,
+        "incremental": true,
+        "outDir": "./lib"
     },
     "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
-    "exclude": ["test/**/*.*"]
+    "exclude": ["test/**/*.*"],
+    "references": [
+        {
+            "path": "../components"
+        },
+        {
+            "path": "../suite"
+        }
+    ]
 }

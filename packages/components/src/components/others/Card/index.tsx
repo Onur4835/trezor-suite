@@ -23,8 +23,7 @@ const getPaddingSize = (
     if (largePadding) return '26px';
     return '20px';
 };
-
-export interface Props {
+interface Props {
     children?: React.ReactNode;
     largePadding?: boolean;
     noPadding?: boolean;

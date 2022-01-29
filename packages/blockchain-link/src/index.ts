@@ -1,12 +1,14 @@
 import { EventEmitter } from 'events';
 import { CustomError } from './constants/errors';
 import { MESSAGES, RESPONSES } from './constants';
-import { create as createDeferred, Deferred } from './utils/deferred';
-import type { BlockchainSettings } from './types';
-import type * as ResponseTypes from './types/responses';
-import type * as MessageTypes from './types/messages';
-import type { Events } from './types/events';
+import * as defferedPackage from './utils/deferred';
+import { BlockchainSettings } from './types';
+import * as ResponseTypes from './types/responses';
+import * as MessageTypes from './types/messages';
+import { Events } from './types/events';
 
+const ahoj = 42;
+console.log(ahoj);
 const workerWrapper = (factory: BlockchainSettings['worker']): Worker => {
     if (typeof factory === 'function') return factory();
     if (typeof factory === 'string' && typeof Worker !== 'undefined') return new Worker(factory);
@@ -16,7 +18,7 @@ const workerWrapper = (factory: BlockchainSettings['worker']): Worker => {
 
 // initialize worker communication, raise error if worker not found
 const initWorker = (settings: BlockchainSettings) => {
-    const dfd: Deferred<Worker> = createDeferred(-1);
+    const dfd: defferedPackage.Deferred<Worker> = defferedPackage.create(-1);
     const worker = workerWrapper(settings.worker);
 
     if (typeof worker !== 'object' || typeof worker.postMessage !== 'function') {
@@ -71,7 +73,7 @@ class BlockchainLink extends EventEmitter {
 
     worker: Worker | undefined;
 
-    deferred: Deferred<any>[] = [];
+    deferred: defferedPackage.Deferred<any>[] = [];
 
     constructor(settings: BlockchainSettings) {
         super();
@@ -90,7 +92,7 @@ class BlockchainLink extends EventEmitter {
     // Sending messages to worker
     async sendMessage<R>(message: any): Promise<R> {
         const worker = await this.getWorker();
-        const dfd = createDeferred(this.messageId);
+        const dfd = defferedPackage.create(this.messageId);
         this.deferred.push(dfd);
         worker.postMessage({ id: this.messageId, ...message });
         this.messageId++;

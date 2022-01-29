@@ -135,9 +135,8 @@
             "@backup-middlewares/*": ["./packages/suite/src/middlewares/backup/*"],
             "@backup-middlewares": ["./packages/suite/src/middlewares/backup/index"],
 
-            // move to native
             "@native/*": ["./packages/suite-native/src/*"],
-            // move to desktop
+
             "@desktop/*": ["./packages/suite-desktop/src/*"],
             "@desktop-electron/*": ["./packages/suite-desktop/src-electron/*"]
         },

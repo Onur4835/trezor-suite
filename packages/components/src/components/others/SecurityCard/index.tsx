@@ -100,7 +100,7 @@ const Line = styled.div`
     /* border-top: 1px solid ${props => props.theme.STROKE_GREY}; */
 `;
 
-export interface Props extends CardProps {
+interface Props extends CardProps {
     variant: 'primary' | 'secondary';
     icon: IconProps['icon'];
     heading: React.ReactNode;

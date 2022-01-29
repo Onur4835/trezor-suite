@@ -44,6 +44,33 @@ console.log('[Electron Build] Starting...');
 console.log(`[Electron Build] Mode: ${isDev ? 'development' : 'production'}`);
 console.log(`[Electron Build] Using mocks: ${useMocks}`);
 
+console.log([
+    ...Object.keys({
+        ...pkg.dependencies,
+        ...pkg.devDependencies,
+    }),
+    path.join(__dirname, '../../suite'),
+]);
+
+console.log(path.join(electronSource, '../tsconfig.json'));
+
+const onResolvePlugin = {
+    name: 'suite-resolve',
+    setup(build) {
+        // Redirect all paths starting with "images/" to "./public/images/"
+        build.onResolve({ filter: /^@trezor\/suite\/.*/ }, args => {
+            const pathWithoutTrezorPrefix = args.path.replace('@trezor/suite', '');
+            const relativePath = path.join(__dirname, '..', '..', 'suite', pathWithoutTrezorPrefix);
+            console.log(args);
+            console.log(relativePath);
+            return {
+                path: relativePath,
+                external: true,
+            };
+        });
+    },
+};
+
 build({
     entryPoints: ['app.ts', 'preload.ts', ...modules].map(f => path.join(electronSource, f)),
     platform: 'node',
@@ -66,7 +93,7 @@ build({
         'process.env.VERSION': JSON.stringify(suiteVersion),
     },
     inject: [path.join(__dirname, 'build-inject.js')],
-    plugins: useMocks ? [mockPlugin] : [],
+    // plugins: [onResolvePlugin, ...[useMocks ? mockPlugin : []]],
 })
     .then(() => {
         const hrend = process.hrtime(hrstart);

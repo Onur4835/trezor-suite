@@ -1,6 +1,9 @@
 const path = require('path');
 const webpack = require('webpack');
-const withTranspileModules = require('next-transpile-modules')(['@trezor/suite']);
+const withTranspileModules = require('next-transpile-modules')([
+    '@trezor/suite',
+    '@trezor/components',
+]);
 const withOptimizedImages = require('next-optimized-images');
 const withVideos = require('next-videos');
 // Get Suite App version from the Suite package.json

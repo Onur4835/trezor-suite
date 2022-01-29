@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "private": true,
     "scripts": {
-        "type-check": "tsc --project tsconfig.json",
+        "type-check": "tsc --build tsconfig.json",
         "type-check:watch": "yarn type-check -- --watch",
         "lint": "eslint '**/*.{ts,tsx,js}'",
         "copy-files": "yarn workspace @trezor/suite-data copy-static-files",
@@ -14,7 +14,7 @@
         "build": "rimraf ./build && yarn workspace @trezor/suite-build run build:web"
     },
     "dependencies": {
-        "@trezor/suite": "1.0.0",
+        "@trezor/suite": "*",
         "worker-loader": "^3.0.8",
         "react-helmet": "^6.1.0",
         "react-router": "^5.2.0",

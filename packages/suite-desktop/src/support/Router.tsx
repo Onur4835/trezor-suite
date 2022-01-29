@@ -6,29 +6,29 @@ import routes from '@trezor/suite/src/constants/suite/routes';
 import Index from '@trezor/suite/src/views/dashboard';
 import Notification from '@trezor/suite/src/views/suite/notifications';
 
-import Wallet from '@wallet-views/transactions';
-import WalletReceive from '@wallet-views/receive';
-import WalletDetails from '@wallet-views/details';
-import WalletTokens from '@wallet-views/tokens';
-import WalletSend from '@wallet-views/send';
-import WalletSignVerify from '@wallet-views/sign-verify';
+import Wallet from '@trezor/suite/src/views/wallet/transactions';
+import WalletReceive from '@trezor/suite/src/views/wallet/receive';
+import WalletDetails from '@trezor/suite/src/views/wallet/details';
+import WalletTokens from '@trezor/suite/src/views/wallet/tokens';
+import WalletSend from '@trezor/suite/src/views/wallet/send';
+import WalletSignVerify from '@trezor/suite/src/views/wallet/sign-verify';
 
-import WalletCoinmarketBuy from '@wallet-views/coinmarket/buy';
-import WalletCoinmarketBuyDetail from '@wallet-views/coinmarket/buy/detail';
-import WalletCoinmarketBuyOffers from '@wallet-views/coinmarket/buy/offers';
-import WalletCoinmarketSell from '@wallet-views/coinmarket/sell';
-import WalletCoinmarketSellDetail from '@wallet-views/coinmarket/sell/detail';
-import WalletCoinmarketSellOffers from '@wallet-views/coinmarket/sell/offers';
-import WalletCoinmarketExchange from '@wallet-views/coinmarket/exchange';
-import WalletCoinmarketExchangeDetail from '@wallet-views/coinmarket/exchange/detail';
-import WalletCoinmarketExchangeOffers from '@wallet-views/coinmarket/exchange/offers';
-import WalletCoinmarketSpend from '@wallet-views/coinmarket/spend';
-import WalletCoinmarketRedirect from '@wallet-views/coinmarket/redirect';
+import WalletCoinmarketBuy from '@trezor/suite/src/views/wallet/coinmarket/buy';
+import WalletCoinmarketBuyDetail from '@trezor/suite/src/views/wallet/coinmarket/buy/detail';
+import WalletCoinmarketBuyOffers from '@trezor/suite/src/views/wallet/coinmarket/buy/offers';
+import WalletCoinmarketSell from '@trezor/suite/src/views/wallet/coinmarket/sell';
+import WalletCoinmarketSellDetail from '@trezor/suite/src/views/wallet/coinmarket/sell/detail';
+import WalletCoinmarketSellOffers from '@trezor/suite/src/views/wallet/coinmarket/sell/offers';
+import WalletCoinmarketExchange from '@trezor/suite/src/views/wallet/coinmarket/exchange';
+import WalletCoinmarketExchangeDetail from '@trezor/suite/src/views/wallet/coinmarket/exchange/detail';
+import WalletCoinmarketExchangeOffers from '@trezor/suite/src/views/wallet/coinmarket/exchange/offers';
+import WalletCoinmarketSpend from '@trezor/suite/src/views/wallet/coinmarket/spend';
+import WalletCoinmarketRedirect from '@trezor/suite/src/views/wallet/coinmarket/redirect';
 
-import Settings from '@settings-views';
-import SettingsCoins from '@settings-views/coins';
-import SettingsDebug from '@settings-views/debug';
-import SettingsDevice from '@settings-views/device';
+import Settings from '@trezor/suite/src/views/settings';
+import SettingsCoins from '@trezor/suite/src/views/settings/coins';
+import SettingsDebug from '@trezor/suite/src/views/settings/debug';
+import SettingsDevice from '@trezor/suite/src/views/settings/device';
 
 const components: { [key: string]: React.ComponentType<any> } = {
     'suite-index': Index,

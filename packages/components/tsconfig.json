@@ -2,8 +2,7 @@
     "compilerOptions": {
         "baseUrl": "./",
         // Target latest version of ECMAScript.
-        "target": "es5",
-        "lib": ["es6", "dom"],
+        "target": "esnext",
         "allowSyntheticDefaultImports": true,
         // fix "duplicate identifier" error
         "skipLibCheck": true,
@@ -11,10 +10,8 @@
         "strict": true,
         // Import non-ES modules as default imports.
         "esModuleInterop": true,
-        "declaration": true,
         // Only emit ‘.d.ts’ declaration files.
         "emitDeclarationOnly": false,
-        "declarationMap": true,
         "noImplicitReturns": true,
         "noImplicitThis": true,
         "noImplicitAny": true,
@@ -22,7 +19,23 @@
         "moduleResolution": "node",
         "resolveJsonModule": true,
         "jsx": "react",
-        "outDir": "lib"
+        "plugins": [
+            {
+                "name": "typescript-styled-plugin"
+            }
+        ],
+
+        // composite project
+        "composite": true,
+        "declaration": true,
+        "declarationMap": true,
+        "incremental": true,
+        "noEmit": false,
+        "outDir": "./lib",
+
+        // these errors should be fixed and then removed this options
+        "noUnusedLocals": false,
+        "noUnusedParameters": false
     },
     "include": ["src/**/*", "styled.d.ts"],
     "exclude": [

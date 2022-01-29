@@ -8,8 +8,21 @@
         "forceConsistentCasingInFileNames": true,
         "esModuleInterop": true,
         "resolveJsonModule": true,
-        "isolatedModules": true
+        "isolatedModules": true,
+        "baseUrl": ".",
+        "paths": {
+            "@desktop-electron/*": ["./src-electron/*"]
+        },
+
+        // composite project
+        "composite": true,
+        "declaration": true,
+        "declarationMap": true,
+        "incremental": true,
+        "outDir": "./lib"
     },
     "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
-    "exclude": ["**/*.js", "src-electron/**/*.ts"]
+    "exclude": ["**/*.js"],
+
+    "references": [{ "path": "../suite" }]
 }

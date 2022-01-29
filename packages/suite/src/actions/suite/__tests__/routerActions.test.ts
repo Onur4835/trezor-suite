@@ -14,7 +14,7 @@ interface InitialState {
     router?: Exclude<RouterState, 'app|url|pathname'>;
 }
 
-export const getInitialState = (state: InitialState | undefined) => {
+const getInitialState = (state: InitialState | undefined) => {
     const suite = state ? state.suite : undefined;
     const router = state ? state.router : undefined;
     return {

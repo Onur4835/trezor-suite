@@ -8,8 +8,16 @@
         "forceConsistentCasingInFileNames": true,
         "esModuleInterop": true,
         "resolveJsonModule": true,
-        "isolatedModules": true
+        "isolatedModules": true,
+
+        // composite project
+        "composite": true,
+        "declaration": true,
+        "declarationMap": true,
+        "incremental": true,
+        "outDir": "./lib"
     },
     "include": ["**/*.ts", "**/*.tsx"],
-    "exclude": ["test/**/*.*"]
+    "exclude": ["test/**/*.*"],
+    "references": [{ "path": "../suite" }]
 }

@@ -50,7 +50,7 @@ module.exports = {
     verbose: false,
     globals: {
         'ts-jest': {
-            tsconfig: '<rootDir>/src-electron/tsconfig.json',
+            tsconfig: '<rootDir>/tsconfig.json',
         },
     },
 };
