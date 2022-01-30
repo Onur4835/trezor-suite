@@ -15,7 +15,7 @@ import { AbstractTransport } from '../transports/abstract';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const stringify = require('json-stable-stringify');
 
-function stableStringify(devices?: Array<TrezorDeviceInfoWithSession>): string {
+function stableStringify(devices?: Array<TrezorDeviceInfoWithSession>) {
     if (devices == null) {
         return `null`;
     }
@@ -29,7 +29,7 @@ function stableStringify(devices?: Array<TrezorDeviceInfoWithSession>): string {
     return stringify(pureDevices);
 }
 
-function compare(a: TrezorDeviceInfoWithSession, b: TrezorDeviceInfoWithSession): number {
+function compare(a: TrezorDeviceInfoWithSession, b: TrezorDeviceInfoWithSession) {
     if (!Number.isNaN(parseInt(a.path, 10))) {
         return parseInt(a.path, 10) - parseInt(b.path, 10);
     }
@@ -142,11 +142,8 @@ export default class LowlevelTransportWithSharedConnections extends AbstractTran
         }
     }
 
-    enumerate(): Promise<Array<TrezorDeviceInfoWithSession>> {
-        return this._silentEnumerate();
-    }
 
-    async _silentEnumerate(): Promise<Array<TrezorDeviceInfoWithSession>> {
+    async _silentEnumerate() {
         await this.sendToWorker({ type: `enumerate-intent` });
         let devices: Array<TrezorDeviceInfoDebug> = [];
         try {
@@ -180,6 +177,11 @@ export default class LowlevelTransportWithSharedConnections extends AbstractTran
         return devicesWithSessions.sort(compare);
     }
 
+
+    enumerate() {
+        return this._silentEnumerate();
+    }
+    
     _releaseDisconnected(devices: Array<TrezorDeviceInfoWithSession>) {
         const connected: { [session: string]: boolean } = {};
         devices.forEach(device => {
@@ -201,16 +203,13 @@ export default class LowlevelTransportWithSharedConnections extends AbstractTran
 
     _lastStringified = ``;
 
-    listen(old: Array<TrezorDeviceInfoWithSession>): Promise<Array<TrezorDeviceInfoWithSession>> {
+    listen(old: Array<TrezorDeviceInfoWithSession>) {
         const oldStringified = stableStringify(old);
         const last = old == null ? this._lastStringified : oldStringified;
         return this._runIter(0, last);
     }
 
-    async _runIter(
-        iteration: number,
-        oldStringified: string,
-    ): Promise<Array<TrezorDeviceInfoWithSession>> {
+    async _runIter(iteration: number, oldStringified: string) {
         const devices = await this._silentEnumerate();
         const stringified = stableStringify(devices);
         if (stringified !== oldStringified || iteration === ITER_MAX) {
@@ -221,7 +220,7 @@ export default class LowlevelTransportWithSharedConnections extends AbstractTran
         return this._runIter(iteration + 1, stringified);
     }
 
-    async acquire(input: AcquireInput, debugLink: boolean): Promise<string> {
+    async acquire(input: AcquireInput, debugLink: boolean) {
         const messBack = await this.sendToWorker({
             type: `acquire-intent`,
             path: input.path,
@@ -259,7 +258,7 @@ export default class LowlevelTransportWithSharedConnections extends AbstractTran
         return session;
     }
 
-    async release(session: string, onclose: boolean, debugLink: boolean): Promise<void> {
+    async release(session: string, onclose: boolean, debugLink: boolean) {
         if (onclose && !debugLink) {
             // if we wait for worker messages, shared worker survives
             // and delays closing
@@ -299,21 +298,21 @@ export default class LowlevelTransportWithSharedConnections extends AbstractTran
         }
     }
 
-    configure(signedData: JSON): Promise<void> {
+    configure(signedData: JSON) {
         const messages = parseConfigure(signedData);
         this.messages = messages;
         this.configured = true;
     }
 
-    _sendLowlevel(path: string, debug: boolean): (data: ArrayBuffer) => Promise<void> {
+    _sendLowlevel(path: string, debug: boolean) {
         return data => this.plugin.send(path, data, debug);
     }
 
-    _receiveLowlevel(path: string, debug: boolean): () => Promise<ArrayBuffer> {
+    _receiveLowlevel(path: string, debug: boolean) {
         return () => this.plugin.receive(path, debug);
     }
 
-    messages(): any {
+    messages() {
         if (this._messages == null) {
             throw new Error(`Transport not configured.`);
         }
@@ -324,7 +323,7 @@ export default class LowlevelTransportWithSharedConnections extends AbstractTran
         session: string,
         debugLink: boolean,
         inside: (path: string) => Promise<X>,
-    ): Promise<X> {
+    ) {
         const sessionsM = await this.sendToWorker({ type: `get-sessions` });
         if (sessionsM.type !== `sessions`) {
             throw new Error(`Wrong reply`);
@@ -352,16 +351,9 @@ export default class LowlevelTransportWithSharedConnections extends AbstractTran
         return Promise.race([defered.rejectingPromise, resPromise]);
     }
 
-    async call(
-        session: string,
-        name: string,
-        data: Object,
-        debugLink: boolean,
-    ): Promise<MessageFromTrezor> {
-        // @ts-ignore
+    call(session: string, name: string, data: Record<string, any>, debugLink: boolean) {
         const callInside: (path: string) => Promise<MessageFromTrezor> = async (path: string) => {
             const messages = this.messages();
-            // @ts-ignore
             await buildAndSend(messages, this._sendLowlevel(path, debugLink), name, data);
             const message = await receiveAndParse(messages, this._receiveLowlevel(path, debugLink));
             return message;
@@ -370,7 +362,7 @@ export default class LowlevelTransportWithSharedConnections extends AbstractTran
         return this.doWithSession(session, debugLink, callInside);
     }
 
-    async post(session: string, name: string, data: Object, debugLink: boolean): Promise<void> {
+    post(session: string, name: string, data: Record<string, any>, debugLink: boolean) {
         const callInside: (path: string) => Promise<void> = async (path: string) => {
             const messages = this.messages();
             await buildAndSend(
@@ -385,8 +377,7 @@ export default class LowlevelTransportWithSharedConnections extends AbstractTran
         return this.doWithSession(session, debugLink, callInside);
     }
 
-    async read(session: string, debugLink: boolean): Promise<MessageFromTrezor> {
-        // @ts-ignore
+    read(session: string, debugLink: boolean) {
         const callInside: (path: string) => Promise<MessageFromTrezor> = async (path: string) => {
             const messages = this.messages();
             const message = await receiveAndParse(messages, this._receiveLowlevel(path, debugLink));
@@ -396,7 +387,7 @@ export default class LowlevelTransportWithSharedConnections extends AbstractTran
         return this.doWithSession(session, debugLink, callInside);
     }
 
-    async init(debug?: boolean): Promise<void> {
+    async init(debug?: boolean) {
         this.debug = !!debug;
         this.requestNeeded = this.plugin.requestNeeded;
         await this.plugin.init(debug);
@@ -411,7 +402,7 @@ export default class LowlevelTransportWithSharedConnections extends AbstractTran
         }
     }
 
-    async requestDevice(): Promise<void> {
+    requestDevice() {
         return this.plugin.requestDevice();
     }
 
@@ -419,7 +410,7 @@ export default class LowlevelTransportWithSharedConnections extends AbstractTran
 
     latestId = 0;
     defereds: { [id: number]: Deferred<MessageFromSharedWorker> } = {};
-    sendToWorker(message: MessageToSharedWorker): Promise<MessageFromSharedWorker> {
+    sendToWorker(message: MessageToSharedWorker) {
         if (this.stopped) {
             // eslint-disable-next-line prefer-promise-reject-errors
             return Promise.reject(`Transport stopped.`);
@@ -447,7 +438,7 @@ export default class LowlevelTransportWithSharedConnections extends AbstractTran
 
     isOutdated = false;
 
-    stop(): void {
+    stop() {
         this.stopped = true;
         this.sharedWorker = undefined;
     }

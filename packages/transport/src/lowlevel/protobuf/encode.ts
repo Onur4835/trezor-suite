@@ -66,7 +66,7 @@ export function patch(Message: Type, payload: any) {
     return patched;
 }
 
-export const encode = (Message: Type, data: Object) => {
+export const encode = (Message: Type, data: Record<string, any>) => {
     const payload = patch(Message, data);
     const message = Message.fromObject(payload);
     // Encode a message to an Uint8Array (browser) or Buffer (node)

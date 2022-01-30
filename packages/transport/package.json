@@ -19,6 +19,7 @@
         "lib/"
     ],
     "scripts": {
+        "dev": "webpack serve --config ./webpack/dev.js",
         "lint": "eslint '**/*.{ts,tsx,js}'",
         "type-check": "tsc --project tsconfig.json",
         "build:lib": "rm -rf lib && tsc --p ./tsconfig.lib.json",

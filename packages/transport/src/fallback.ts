@@ -1,33 +1,29 @@
 // @ts-nocheck
 
-import type {
-    Transport,
-    AcquireInput,
-    TrezorDeviceInfoWithSession,
-    MessageFromTrezor,
-} from './types';
+import type { AcquireInput, TrezorDeviceInfoWithSession, MessageFromTrezor } from './types';
 
+import { AbstractTransport } from './transports/abstract';
 export default class FallbackTransport {
     name = `FallbackTransport`;
     activeName = ``;
 
-    _availableTransports: Array<Transport>;
-    transports: Array<Transport>;
+    _availableTransports: Array<AbstractTransport>;
+    transports: Array<AbstractTransport>;
     configured: boolean;
     version: string;
     debug = false;
 
-    // note: activeTransport is actually "?Transport", but
+    // note: activeTransport is actually "?AbstractTransport", but
     // everywhere I am using it is in `async`, so error gets returned as Promise.reject
-    activeTransport: Transport;
+    activeTransport: AbstractTransport;
 
-    constructor(transports: Array<Transport>) {
+    constructor(transports: Array<AbstractTransport>) {
         this.transports = transports;
     }
 
     // first one that inits successfuly is the final one; others won't even start initing
-    async _tryInitTransports(): Promise<Array<Transport>> {
-        const res: Array<Transport> = [];
+    async _tryInitTransports(): Promise<Array<AbstractTransport>> {
+        const res: Array<AbstractTransport> = [];
         let lastError: Error = null;
         for (const transport of this.transports) {
             try {
@@ -44,7 +40,7 @@ export default class FallbackTransport {
     }
 
     // first one that inits successfully is the final one; others won't even start initing
-    async _tryConfigureTransports(data: JSON | string): Promise<Transport> {
+    async _tryConfigureTransports(data: JSON | string): Promise<AbstractTransport> {
         let lastError: Error = null;
         for (const transport of this._availableTransports) {
             try {
@@ -72,7 +68,7 @@ export default class FallbackTransport {
 
     isOutdated: boolean;
     async configure(signedData: JSON | string): Promise<void> {
-        const pt: Promise<Transport> = this._tryConfigureTransports(signedData);
+        const pt: Promise<AbstractTransport> = this._tryConfigureTransports(signedData);
         this.activeTransport = await pt;
         this.configured = this.activeTransport.configured;
         this.version = this.activeTransport.version;
@@ -81,43 +77,45 @@ export default class FallbackTransport {
         this.isOutdated = this.activeTransport.isOutdated;
     }
 
-    // using async so I get Promise.recect on this.activeTransport == null (or other error), not Error
-    async enumerate(): Promise<Array<TrezorDeviceInfoWithSession>> {
+    enumerate(): Promise<Array<TrezorDeviceInfoWithSession>> {
         return this.activeTransport.enumerate();
     }
 
-    async listen(
-        old?: Array<TrezorDeviceInfoWithSession>,
-    ): Promise<Array<TrezorDeviceInfoWithSession>> {
+    listen(old?: Array<TrezorDeviceInfoWithSession>): Promise<Array<TrezorDeviceInfoWithSession>> {
         return this.activeTransport.listen(old);
     }
 
-    async acquire(input: AcquireInput, debugLink: boolean): Promise<string> {
+    acquire(input: AcquireInput, debugLink: boolean): Promise<string> {
         return this.activeTransport.acquire(input, debugLink);
     }
 
-    async release(session: string, onclose: boolean, debugLink: boolean): Promise<void> {
+    release(session: string, onclose: boolean, debugLink: boolean): Promise<void> {
         return this.activeTransport.release(session, onclose, debugLink);
     }
 
-    async call(
+    call(
         session: string,
         name: string,
-        data: Object,
+        data: Record<string, any>,
         debugLink: boolean,
     ): Promise<MessageFromTrezor> {
         return this.activeTransport.call(session, name, data, debugLink);
     }
 
-    async post(session: string, name: string, data: Object, debugLink: boolean): Promise<void> {
+    post(
+        session: string,
+        name: string,
+        data: Record<string, any>,
+        debugLink: boolean,
+    ): Promise<void> {
         return this.activeTransport.post(session, name, data, debugLink);
     }
 
-    async read(session: string, debugLink: boolean): Promise<MessageFromTrezor> {
+    read(session: string, debugLink: boolean): Promise<MessageFromTrezor> {
         return this.activeTransport.read(session, debugLink);
     }
 
-    async requestDevice(): Promise<void> {
+    requestDevice(): Promise<void> {
         return this.activeTransport.requestDevice();
     }
 

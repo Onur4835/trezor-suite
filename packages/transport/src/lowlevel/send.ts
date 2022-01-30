@@ -1,3 +1,5 @@
+/* eslint-disable no-await-in-loop */
+
 // Logic of sending data to trezor
 //
 // Logic of "call" is broken to two parts - sending and receiving
@@ -18,7 +20,7 @@ async function sendBuffers(
 
 // Sends message to device.
 // Resolves if everything gets sent
-export function buildOne(messages: Root, name: string, data: Object) {
+export function buildOne(messages: Root, name: string, data: Record<string, any>) {
     const { Message, messageType } = createMessageFromName(messages, name);
 
     const buffer = encodeProtobuf(Message, data);
@@ -29,7 +31,7 @@ export function buildOne(messages: Root, name: string, data: Object) {
     });
 }
 
-export const buildBuffers = (messages: Root, name: string, data: Object) => {
+export const buildBuffers = (messages: Root, name: string, data: Record<string, any>) => {
     const { Message, messageType } = createMessageFromName(messages, name);
     const buffer = encodeProtobuf(Message, data);
     return encodeProtocol(buffer, {
@@ -41,11 +43,11 @@ export const buildBuffers = (messages: Root, name: string, data: Object) => {
 
 // Sends message to device.
 // Resolves if everything gets sent
-export async function buildAndSend(
+export function buildAndSend(
     messages: Root,
     sender: (data: Buffer) => Promise<void>,
     name: string,
-    data: Object,
+    data: Record<string, any>,
 ): Promise<void> {
     const buffers = buildBuffers(messages, name, data);
     return sendBuffers(sender, buffers);

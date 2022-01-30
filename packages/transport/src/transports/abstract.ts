@@ -10,7 +10,7 @@ import { parseConfigure } from '../lowlevel/protobuf/messages';
 
 type Success<Payload> = { success: true; payload: Payload };
 type Error = { success: false; error: string };
-type Response<Payload> = Promise<Success<Extract<Payload, { success: true }>>['payload'] | Error>;
+export type Response<Payload> = Promise<Success<Extract<Payload, { success: true }>>['payload'] | Error>;
 
 export abstract class AbstractTransport {
     configured = false;

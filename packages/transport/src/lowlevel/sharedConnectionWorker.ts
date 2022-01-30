@@ -11,33 +11,22 @@ import { createDeferred, Deferred } from '@trezor/utils';
 import type { TrezorDeviceInfoDebug } from './sharedPlugin';
 import type { MessageFromSharedWorker, MessageToSharedWorker } from './withSharedConnections';
 
-// @ts-ignore
-if (typeof onconnect !== `undefined`) {
-    // @ts-ignore
-    onconnect = function (e) {
-        const port = e.ports[0];
-        port.onmessage = function (e) {
-            handleMessage(e.data, port);
-        };
-    };
-}
-
 // path => session
 const normalSessions: { [path: string]: string } = {};
 const debugSessions: { [path: string]: string } = {};
 
-let lock: Deferred<Object> | null = null;
+let lock: Deferred<Record<string, any>> | null = null;
 let waitPromise: Promise<void> = Promise.resolve();
 
-type PortObject = { postMessage: (message: Object) => void };
+type PortObject = { postMessage: (message: Record<string, any>) => void };
 
-function startLock(): void {
+function startLock() {
     const newLock = createDeferred();
     lock = newLock;
     setTimeout(() => newLock.reject(new Error(`Timed out`)), 10 * 1000);
 }
 
-function releaseLock(obj: Object): void {
+function releaseLock(obj: Record<string, any>) {
     if (lock == null) {
         // TODO: ???
         return;
@@ -56,6 +45,143 @@ function waitForLock() {
 function waitInQueue(fn: () => Promise<void>) {
     const res = waitPromise.then(() => fn());
     waitPromise = res.catch(() => {});
+}
+
+function sendBack(message: MessageFromSharedWorker, id: number, port: PortObject) {
+    port.postMessage({ id, message });
+}
+
+function handleEnumerateIntent(id: number, port: PortObject) {
+    startLock();
+    sendBack({ type: `ok` }, id, port);
+
+    // if lock times out, promise rejects and queue goes on
+    // @ts-ignore
+    return waitForLock().then((obj: { id: number }) => {
+        sendBack({ type: `ok` }, obj.id, port);
+    });
+}
+
+function handleReleaseDone(id: number) {
+    releaseLock({ id });
+}
+
+function handleReleaseOnClose(session: string) {
+    let path_: string | null = null;
+    Object.keys(normalSessions).forEach(kpath => {
+        if (normalSessions[kpath] === session) {
+            path_ = kpath;
+        }
+    });
+    if (path_ == null) {
+        return Promise.resolve();
+    }
+
+    const path: string = path_;
+    delete normalSessions[path];
+    delete debugSessions[path];
+    return Promise.resolve();
+}
+
+function handleReleaseIntent(session: string, debug: boolean, id: number, port: PortObject) {
+    let path_: string | null = null;
+    const sessions = debug ? debugSessions : normalSessions;
+    const otherSessions = !debug ? debugSessions : normalSessions;
+    Object.keys(sessions).forEach(kpath => {
+        if (sessions[kpath] === session) {
+            path_ = kpath;
+        }
+    });
+    if (path_ == null) {
+        sendBack({ type: `double-release` }, id, port);
+        return Promise.resolve();
+    }
+
+    const path = path_;
+
+    const otherSession = otherSessions[path];
+
+    startLock();
+    sendBack({ type: `path`, path, otherSession }, id, port);
+
+    // if lock times out, promise rejects and queue goes on
+    // @ts-ignore
+    return waitForLock().then((obj: { id: number }) => {
+        // failure => nothing happens, but still has to reply "ok"
+        delete sessions[path];
+        sendBack({ type: `ok` }, obj.id, port);
+    });
+}
+
+function handleGetSessions(id: number, port: PortObject, devices?: Array<TrezorDeviceInfoDebug>) {
+    if (devices != null) {
+        const connected: { [path: string]: boolean } = {};
+        devices.forEach(d => {
+            connected[d.path] = true;
+        });
+        Object.keys(normalSessions).forEach(path => {
+            if (!normalSessions[path]) {
+                delete normalSessions[path];
+            }
+        });
+        Object.keys(debugSessions).forEach(path => {
+            if (!debugSessions[path]) {
+                delete debugSessions[path];
+            }
+        });
+    }
+    sendBack({ type: `sessions`, debugSessions, normalSessions }, id, port);
+    return Promise.resolve();
+}
+
+let lastSession = 0;
+function handleAcquireDone(id: number) {
+    releaseLock({ good: true, id });
+}
+
+function handleAcquireFailed(id: number) {
+    releaseLock({ good: false, id });
+}
+
+function handleAcquireIntent(
+    path: string,
+    previous?: string,
+    debug?: boolean,
+    id?: number,
+    port?: PortObject,
+) {
+    let error = false;
+    const thisTable = debug ? debugSessions : normalSessions;
+    const otherTable = !debug ? debugSessions : normalSessions;
+    const realPrevious = thisTable[path];
+
+    if (realPrevious == null) {
+        error = previous != null;
+    } else {
+        error = previous !== realPrevious;
+    }
+    if (error) {
+        sendBack({ type: `wrong-previous-session` }, id, port);
+        return Promise.resolve();
+    }
+    startLock();
+    sendBack({ type: `other-session`, otherSession: otherTable[path] }, id, port);
+    // if lock times out, promise rejects and queue goes on
+    // @ts-ignore
+    return waitForLock().then((obj: { good: boolean; id: number }) => {
+        if (obj.good) {
+            lastSession++;
+            let session = lastSession.toString();
+            if (debug) {
+                session = `debug${session}`;
+            }
+            thisTable[path] = session;
+            sendBack({ type: `session-number`, number: session }, obj.id, port);
+        } else {
+            // failure => nothing happens, but still has to reply "ok"
+            sendBack({ type: `ok` }, obj.id, port);
+        }
+    });
 }
 
 function handleMessage(
@@ -104,156 +230,19 @@ function handleMessage(
     }
 }
 
-function handleEnumerateIntent(id: number, port: PortObject): Promise<void> {
-    startLock();
-    sendBack({ type: `ok` }, id, port);
-
-    // if lock times out, promise rejects and queue goes on
-    // @ts-ignore
-    return waitForLock().then((obj: { id: number }) => {
-        sendBack({ type: `ok` }, obj.id, port);
-    });
-}
-
-function handleReleaseDone(id: number) {
-    releaseLock({ id });
-}
-
-function handleReleaseOnClose(session: string): Promise<void> {
-    let path_: string | null = null;
-    Object.keys(normalSessions).forEach(kpath => {
-        if (normalSessions[kpath] === session) {
-            path_ = kpath;
-        }
-    });
-    if (path_ == null) {
-        return Promise.resolve();
-    }
-
-    const path: string = path_;
-    delete normalSessions[path];
-    delete debugSessions[path];
-    return Promise.resolve();
-}
-
-function handleReleaseIntent(
-    session: string,
-    debug: boolean,
-    id: number,
-    port: PortObject,
-): Promise<void> {
-    let path_: string | null = null;
-    const sessions = debug ? debugSessions : normalSessions;
-    const otherSessions = !debug ? debugSessions : normalSessions;
-    Object.keys(sessions).forEach(kpath => {
-        if (sessions[kpath] === session) {
-            path_ = kpath;
-        }
-    });
-    if (path_ == null) {
-        sendBack({ type: `double-release` }, id, port);
-        return Promise.resolve();
-    }
-
-    const path: string = path_;
-
-    const otherSession = otherSessions[path];
-
-    startLock();
-    sendBack({ type: `path`, path, otherSession }, id, port);
-
-    // if lock times out, promise rejects and queue goes on
-    // @ts-ignore
-    return waitForLock().then((obj: { id: number }) => {
-        // failure => nothing happens, but still has to reply "ok"
-        delete sessions[path];
-        sendBack({ type: `ok` }, obj.id, port);
-    });
-}
-
-function handleGetSessions(
-    id: number,
-    port: PortObject,
-    devices?: Array<TrezorDeviceInfoDebug>,
-): Promise<void> {
-    if (devices != null) {
-        const connected: { [path: string]: boolean } = {};
-        devices.forEach(d => {
-            connected[d.path] = true;
-        });
-        Object.keys(normalSessions).forEach(path => {
-            if (!normalSessions[path]) {
-                delete normalSessions[path];
-            }
-        });
-        Object.keys(debugSessions).forEach(path => {
-            if (!debugSessions[path]) {
-                delete debugSessions[path];
-            }
-        });
-    }
-    sendBack({ type: `sessions`, debugSessions, normalSessions }, id, port);
-    return Promise.resolve();
-}
-
-let lastSession = 0;
-function handleAcquireDone(id: number) {
-    releaseLock({ good: true, id });
-}
-
-function handleAcquireFailed(id: number) {
-    releaseLock({ good: false, id });
-}
-
-function handleAcquireIntent(
-    path: string,
-    previous?: string,
-    debug?: boolean,
-    id?: number,
-    port?: PortObject,
-): Promise<void> {
-    let error = false;
-    const thisTable = debug ? debugSessions : normalSessions;
-    const otherTable = !debug ? debugSessions : normalSessions;
-    const realPrevious = thisTable[path];
-
-    if (realPrevious == null) {
-        error = previous != null;
-    } else {
-        error = previous !== realPrevious;
-    }
-    if (error) {
-        sendBack({ type: `wrong-previous-session` }, id, port);
-        return Promise.resolve();
-    }
-    startLock();
-    sendBack({ type: `other-session`, otherSession: otherTable[path] }, id, port);
-    // if lock times out, promise rejects and queue goes on
-    // @ts-ignore
-    return waitForLock().then((obj: { good: boolean; id: number }) => {
-        if (obj.good) {
-            lastSession++;
-            let session = lastSession.toString();
-            if (debug) {
-                session = `debug${session}`;
-            }
-            thisTable[path] = session;
-            sendBack({ type: `session-number`, number: session }, obj.id, port);
-        } else {
-            // failure => nothing happens, but still has to reply "ok"
-            sendBack({ type: `ok` }, obj.id, port);
-        }
-    });
-}
-
-function sendBack(message: MessageFromSharedWorker, id: number, port: PortObject) {
-    port.postMessage({ id, message });
-}
-
 // when shared worker is not loaded as a shared loader, use it as a module instead
 export function postModuleMessage(
     { id, message }: { id: number; message: MessageToSharedWorker },
-    fn: (message: Object) => void,
+    fn: (message: Record<string, any>) => void,
 ) {
     handleMessage({ id, message }, { postMessage: fn });
+}
+
+if (typeof onconnect !== `undefined`) {
+    onconnect = function (e) {
+        const port = e.ports[0];
+        port.onmessage = e => {
+            handleMessage(e.data, port);
+        };
+    };
 }
