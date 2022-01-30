@@ -11,6 +11,8 @@
         "noUnusedParameters": true,
         "noErrorTruncation": true,
         "types": ["jest", "node"],
+        // todo:
+        "resolveJsonModule": true
     },
     "include": ["./src/index.ts"],
     "exclude": [

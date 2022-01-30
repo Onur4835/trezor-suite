@@ -82,6 +82,7 @@ class Webusb extends AbstractTransport {
     async _listDevices() {
         let bootloaderId = 0;
         const devices = await this.usb.getDevices();
+        console.log('devices', devices);
         const trezorDevices = devices.filter(dev => {
             const isTrezor = TREZOR_DESCS.some(
                 desc => dev.vendorId === desc.vendorId && dev.productId === desc.productId,
@@ -101,7 +102,7 @@ class Webusb extends AbstractTransport {
                 path += bootloaderId;
             }
             const debug = this._deviceHasDebugLink(device);
-            return { path, device, debug };
+            return { path, device, debug, vendor: 1, product: 111 };
         });
 
         const oldUnreadableHidDevice = this.unreadableHidDevice;
@@ -110,7 +111,7 @@ class Webusb extends AbstractTransport {
         if (oldUnreadableHidDevice !== this.unreadableHidDevice) {
             this.unreadableHidDeviceChange.emit('change');
         }
-
+        console.log('_lastDevices', this._lastDevices);
         return this._lastDevices;
     }
 
@@ -228,8 +229,16 @@ class Webusb extends AbstractTransport {
     }
 
     async requestDevice() {
-        // I am throwing away the resulting device, since it appears in enumeration anyway
-        await this.usb.requestDevice({ filters: TREZOR_DESCS });
+        try {
+            console.log('webusb requestDevice');
+            // I am throwing away the resulting device, since it appears in enumeration anyway
+            const result = await this.usb.requestDevice({ filters: TREZOR_DESCS });
+            console.log('requestDevice', result);
+            return result;
+        } catch (err) {
+            console.log(err);
+            return error(err.message);
+        }
     }
 
     requestNeeded = true;
@@ -240,13 +249,14 @@ class Webusb extends AbstractTransport {
             return error(NOT_CONFIGURED);
         }
         const devices = await this._listDevices();
-        return success(
-            check.enumerate(
-                devices.map(info => ({
-                    path: info.path,
-                    debug: info.debug,
-                })),
-            ),
+        console.log('devicesxx', devices);
+        return check.enumerate(
+            devices.map(info => ({
+                path: info.path,
+                debug: info.debug,
+                vendor: info.vendor,
+                product: info.product,
+            })),
         );
     }
 }

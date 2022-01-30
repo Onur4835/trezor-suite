@@ -3,6 +3,7 @@
     "compilerOptions": {
         "noEmit": true,
         "skipLibCheck": false,
+        "resolveJsonModule": true,
     },
     "include": ["**/*.ts"],
     "exclude": ["node_modules"]

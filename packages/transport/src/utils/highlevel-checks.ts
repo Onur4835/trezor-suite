@@ -12,7 +12,8 @@ import {
     // Union,
     // Partial,
     // Static,
-    Null,
+    // Undefined,
+    // Null,    
     Optional,
 } from 'runtypes';
 
@@ -38,19 +39,25 @@ export const init = (res: any) => {
 export function enumerate(res: any) {
     try {
         return success(
-            (res as any[]).map(r =>
-                Record({
+            (res as any[]).map(r => {
+                console.log('r', r);
+                return Record({
                     path: String,
                     vendor: Number,
                     product: Number,
                     debug: Boolean,
                     // todo: really optional?
-                    session: Optional(String).Or(Null),
-                    debugSession: String.Or(Null),
-                }).check(r),
-            ),
+                    session: Optional(String), //.Or(Null),
+                    debugSession: Optional(String), //.Or(Null),
+                    // session: Union(Optional(String).Or(Null), Undefined),
+                    // debugSession: Union(Optional(String).Or(Null), Undefined),
+                }).check(r);
+            }),
         );
     } catch (_err) {
+        // @ts-ignore
+        console.log(_err.message);
+
         return error(ERROR);
     }
 }
