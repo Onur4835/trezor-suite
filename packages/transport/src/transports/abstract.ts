@@ -2,16 +2,16 @@ import type {
     // TrezorDeviceInfo,
     TrezorDeviceInfoWithSession,
     AcquireInput,
-    MessageFromTrezor,
 } from '../types';
 
 import type { INamespace } from 'protobufjs/light';
-
+import * as check from '../utils/highlevel-checks';
 import { parseConfigure } from '../lowlevel/protobuf/messages';
 
 type Success<Payload> = { success: true; payload: Payload };
 type Error = { success: false; error: string };
-type Response<Payload> = Promise<Success<Payload> | Error>;
+type Response<Payload> = Promise<Success<Extract<Payload, { success: true }>>['payload'] | Error>;
+
 export abstract class AbstractTransport {
     configured = false;
     stopped = false;
@@ -23,24 +23,36 @@ export abstract class AbstractTransport {
     // isOutdated: boolean;
     // activeName?: string;
 
-    abstract enumerate(): Response<TrezorDeviceInfoWithSession[]>;
-    abstract listen(old?: TrezorDeviceInfoWithSession[]): Response<TrezorDeviceInfoWithSession[]>;
-    abstract acquire(input: AcquireInput, debugLink?: boolean): Response<string>;
-    abstract release(session: string, onclose: boolean, debugLink?: boolean): Response<string>;
+    abstract enumerate(): Response<ReturnType<typeof check['enumerate']>>;
+    abstract listen(
+        old?: TrezorDeviceInfoWithSession[],
+    ): Response<ReturnType<typeof check['listen']>>;
+    abstract acquire(
+        input: AcquireInput,
+        debugLink?: boolean,
+    ): Response<ReturnType<typeof check['acquire']>>;
+    abstract release(
+        session: string,
+        onclose: boolean,
+        debugLink?: boolean,
+    ): Response<ReturnType<typeof check['release']>>;
     abstract call(
         session: string,
         name: string,
-        data: Object,
+        data: Record<string, any>,
         debugLink?: boolean,
-    ): Response<MessageFromTrezor>;
-    abstract post(session: string, name: string, data: Object, debugLink?: boolean): Response<string>;
-    abstract read(session: string, debugLink?: boolean): Response<MessageFromTrezor>;
+    ): Response<ReturnType<typeof check['call']>>;
+    abstract post(
+        session: string,
+        name: string,
+        data: Record<string, any>,
+        debugLink?: boolean,
+    ): Response<ReturnType<typeof check['post']>>;
+
+    abstract read(session: string, debugLink?: boolean): Response<ReturnType<typeof check['read']>>;
     // resolves when the transport can be used; rejects when it cannot
 
-    abstract init(debug?: boolean): Response<string>;
-
-    // setBridgeLatestUrl(url: string): void;
-    // setBridgeLatestVersion(version: string): void;
+    abstract init(debug?: boolean): Response<ReturnType<typeof check['init']>>;
 
     stop() {
         this.stopped = true;

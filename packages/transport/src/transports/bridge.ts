@@ -16,6 +16,8 @@ class BridgeTransport extends AbstractTransport {
     url: string;
     newestVersionUrl: string;
     bridgeVersion?: string;
+
+    // todo: super class
     debug = false;
 
     // configured = false;
@@ -30,7 +32,7 @@ class BridgeTransport extends AbstractTransport {
 
     private _post(options: HttpRequestOptions) {
         if (this.stopped) {
-            return { success: false as const, error: 'Transport stopped.' };
+            return error('Transport stopped.');
         }
         return http({
             ...options,
@@ -51,8 +53,10 @@ class BridgeTransport extends AbstractTransport {
             url: this.url,
             method: 'POST',
         });
-        const info = check.info(infoS);
-        this.version = info.version;
+        const info = check.init(infoS);
+        if (!info.success) return info;
+
+        this.version = info.payload.version;
 
         let newVersion: string | undefined;
 
@@ -69,16 +73,19 @@ class BridgeTransport extends AbstractTransport {
             }
             if (typeof res.payload !== 'string') {
                 // todo:
-                return { success: false as const, error: 'wrong response type' };
+                return error('wrong response type');
             }
             newVersion = res.payload;
         }
 
         this.isOutdated = semverCompare(this.version, newVersion) < 0;
-        return { success: true as const, payload: 'initialized' };
+        return success({
+            version: info.payload.version,
+            configured: true,
+        });
     }
 
-    async init(debug = false) {
+    init(debug = false) {
         this.debug = debug;
         return this._silentInit();
     }
@@ -100,6 +107,7 @@ class BridgeTransport extends AbstractTransport {
 
     async enumerate() {
         const response = await this._post({ url: '/enumerate' });
+
         if (!response.success) {
             return response;
         }
@@ -120,23 +128,20 @@ class BridgeTransport extends AbstractTransport {
         });
         if (onclose) {
             // todo:
-            // return;
-            return { success: true as const, payload: 'what is this for?' };
+            return success(0);
         }
         const res = await response;
         if (!res.success) {
-            return res;
+            return error(res.error);
         }
-        if (typeof res.payload !== 'string') {
-            throw new Error('eow');
-        }
-        return { success: res.success, payload: res.payload };
+
+        return check.release(res.payload);
     }
 
     async call(session: string, name: string, data: Record<string, unknown>, debugLink?: boolean) {
         // todo: maybe move messages to constructor?
         if (!this.messages) {
-            return { success: false as const, error: 'Transport not configured.' };
+            return error('Transport not configured.');
         }
         const o = buildOne(this.messages, name, data);
         const outData = o.toString('hex');
@@ -144,16 +149,16 @@ class BridgeTransport extends AbstractTransport {
             url: `${debugLink ? '/debug' : ''}/call/${session}`,
             body: outData,
         });
-        if (typeof resData !== 'string') {
-            return { success: false as const, error: 'Returning data is not string.' };
+        if (resData.success && typeof resData.payload === 'string') {
+            const jsonData = receiveOne(this.messages, resData.payload);
+            return check.call(jsonData);
         }
-        const jsonData = receiveOne(this.messages, resData);
-        return check.call(jsonData);
+        return error('Returning data is not string.');
     }
 
     async post(session: string, name: string, data: Record<string, unknown>, debugLink?: boolean) {
         if (!this.messages) {
-            return { success: false as const, error: 'Transport not configured.' };
+            return error('Transport not configured.');
         }
         const outData = buildOne(this.messages, name, data).toString('hex');
         const response = await this._post({
@@ -164,43 +169,28 @@ class BridgeTransport extends AbstractTransport {
         if (!response.success) {
             return response;
         }
-
-        if (typeof response.payload !== 'string') {
-            throw new Error('eow');
-        }
-        return { success: response.success, payload: response.payload };
+        return check.post(response.payload);
     }
 
     async read(session: string, debugLink?: boolean) {
         if (!this.messages) {
             // todo:
-            return { success: false as const, error: 'Transport not configured.' };
+            return error('Transport not configured.');
         }
         const resData = await this._post({
             url: `${debugLink ? '/debug' : ''}/read/${session}`,
         });
         if (typeof resData !== 'string') {
             // todo:
-            return { success: false as const, error: 'Response is not string.' };
+            return error('Response is not string.');
         }
         const jsonData = receiveOne(this.messages, resData);
-        const checked = check.call(jsonData);
-        if (!checked.success) {
-            return { success: false as const, error: checked.error };
-        }
-        return { success: true as const, payload: checked.payload };
+        return check.call(jsonData);
     }
 
     static setFetch(fetch: any, isNode?: boolean) {
         setFetch(fetch, isNode);
     }
-
-    // todo: not used?
-    // requestDevice() {
-    //     return Promise.reject();
-    // }
-
-    // requestNeeded = false;
 
     setBridgeLatestUrl(url: string) {
         this.newestVersionUrl = url;

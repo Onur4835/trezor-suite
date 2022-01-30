@@ -23,9 +23,9 @@ describe('bridge', () => {
         await wait(1000);
     });
 
-    afterEach(() => {
-        controller.disconnect();
-    });
+    // afterEach(() => {
+    //     controller.disconnect();
+    // });
 
     test('enumerate - acquire - getFeatures', async () => {
         BridgeV2.setFetch(fetch, true);
@@ -34,10 +34,16 @@ describe('bridge', () => {
         await bridge.init();
         await bridge.configure(messages);
 
-        const devices = await bridge.enumerate();
-        console.log('devices', devices);
-        
-        expect(devices).toEqual([
+        const enumerate = await bridge.enumerate();
+
+        if (!enumerate.success) {
+            return expect(enumerate.success).toEqual(true);
+        }
+        expect(enumerate.success).toEqual(true);
+
+        console.log('devices', enumerate.payload);
+
+        expect(enumerate.payload).toEqual([
             {
                 path: '1',
                 session: null,
@@ -48,55 +54,76 @@ describe('bridge', () => {
             },
         ]);
 
-        const session = await bridge.acquire({ path: devices[0].path });
+        const acquire = await bridge.acquire({ path: enumerate.payload[0].path });
 
-        const message = await bridge.call(session, 'GetFeatures', {});
+        if (!acquire.success) {
+            return expect(acquire.success).toEqual(true);
+        }
 
-        // expect(message).toMatchObject({
-        //     type: 'Features',
-        //     message: {
-        //         vendor: 'trezor.io',
-        //         label: 'TrezorT',
-        //     },
-        // });
-    });
+        const call = await bridge.call(acquire.payload.session, 'GetFeatures', {});
 
-    test('sessions stealing', async () => {
-        BridgeV2.setFetch(fetch, true);
+        if (!call.success) {
+            return expect(call.success).toEqual(true);
+        }
 
-        const client1 = new BridgeV2();
-        const client2 = new BridgeV2();
-
-        await client1.init();
-        await client2.init();
-
-        client1.configure(messages);
-        client2.configure(messages);
-
-        const devices = await client1.enumerate();
-
-        const session1 = await client1.acquire({ path: devices[0].path });
-
-        console.log('session1', session1);
-
-        let message = await client1.call(session1, 'GetFeatures', {});
-
-        expect(message).toMatchObject({
+        expect(call.payload).toMatchObject({
             type: 'Features',
             message: {
                 vendor: 'trezor.io',
                 label: 'TrezorT',
             },
         });
-
-        const session2 = await client2.acquire({ path: devices[0].path });
-
-        console.log('session2', session2);
-
-        message = await client2.call(session2, 'GetFeatures', {});
-
-        console.log('message', message);
-        // const session1 = await client1.acquire({ path: devices[0].path });
-
     });
+
+    // test('sessions stealing', async () => {
+    //     BridgeV2.setFetch(fetch, true);
+
+    //     const client1 = new BridgeV2();
+    //     const client2 = new BridgeV2();
+
+    //     await client1.init();
+
+    //     client1.configure(messages);
+    //     client2.configure(messages);
+
+    //     const enumerate = await client1.enumerate();
+    //     console.log('==== enumerate', enumerate);
+    //     if (!enumerate.success) {
+    //         return expect(enumerate.success).toEqual(true);
+    //     }
+
+    //     const session1 = await client1.acquire({ path: enumerate.payload[0].path, previous: enumerate.payload[0].session });
+    //     console.log('session1', session1);
+
+    //     if (!session1.success) {
+    //         return expect(session1.success).toEqual(true);
+    //     }
+
+    //     let message = await client1.call(session1.payload.session, 'GetFeatures', {});
+    //     console.log('message', message);
+    //     if (!message.success) {
+    //         return expect(message.success).toEqual(true);
+    //     }
+
+    //     expect(message.payload).toMatchObject({
+    //         type: 'Features',
+    //         message: {
+    //             vendor: 'trezor.io',
+    //             label: 'TrezorT',
+    //         },
+    //     });
+
+    //     const session2 = await client2.acquire({ path: enumerate.payload[0].path, previous: enumerate.payload[0].session });
+    //     console.log('session2', session2);
+
+    //     if (!session2.success) {
+    //         console.log('session2', session2);
+    //         return expect(session2.success).toEqual(true);
+    //     }
+
+    //     message = await client2.call(session2.payload.session, 'GetFeatures', {});
+
+    //     console.log('message', message);
+    //     // const session1 = await client1.acquire({ path: devices[0].path });
+    // });
 });

@@ -1,4 +1,4 @@
-import { MessageFromTrezor } from "..";
+import { success, error } from './response';
 
 export type HttpRequestOptions = {
     url: string;
@@ -61,23 +61,32 @@ export async function request(options: HttpRequestOptions) {
     }
 
     if (!localFetch) {
-        return { success: false as const, error: 'fetch not set' };
+        return error('fetch not set');
     }
 
-    const res = await localFetch(options.url, fetchOptions);
-
-    if (!res.ok) {
-        return { success: false as const, error: 'todo: error' };
-    }
-
-    const resText = await res.text();
-
+    console.log('options.url', options.url);
+    console.log('fetchOptions', fetchOptions);
     try {
-        const json = await JSON.parse(resText);
+        const res = await localFetch(options.url, fetchOptions);
+        console.log('res', res);
 
-        return { success: true as const, payload: json as MessageFromTrezor };
+        if (!res.ok) {
+            console.log('res', res);
+            return error('todo: error');
+        }
+
+        const resText = await res.text();
+        console.log('resText', resText);
+
+        try {
+            const json = await JSON.parse(resText);
+
+            return success(json as Record<string, any>);
+        } catch (err) {
+            return success(resText as string);
+        }
     } catch (err) {
-
-        return { success: true as const, payload: resText };
+        console.log('erreeeerrr', err);
+        return error('meow');
     }
 }

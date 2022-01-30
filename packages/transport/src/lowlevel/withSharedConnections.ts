@@ -10,6 +10,7 @@ import type { LowlevelTransportSharedPlugin, TrezorDeviceInfoDebug } from './sha
 import type { MessageFromTrezor, TrezorDeviceInfoWithSession, AcquireInput } from '../types';
 
 import { postModuleMessage } from './sharedConnectionWorker';
+import { AbstractTransport } from '../transports/abstract';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const stringify = require('json-stable-stringify');
@@ -109,7 +110,7 @@ export type MessageFromSharedWorker =
           otherSession?: string;
       };
 
-export default class LowlevelTransportWithSharedConnections {
+export default class LowlevelTransportWithSharedConnections extends AbstractTransport {
     name = `LowlevelTransportWithSharedConnections`;
 
     plugin: LowlevelTransportSharedPlugin;
@@ -200,9 +201,7 @@ export default class LowlevelTransportWithSharedConnections {
 
     _lastStringified = ``;
 
-    async listen(
-        old: Array<TrezorDeviceInfoWithSession>,
-    ): Promise<Array<TrezorDeviceInfoWithSession>> {
+    listen(old: Array<TrezorDeviceInfoWithSession>): Promise<Array<TrezorDeviceInfoWithSession>> {
         const oldStringified = stableStringify(old);
         const last = old == null ? this._lastStringified : oldStringified;
         return this._runIter(0, last);
@@ -300,11 +299,9 @@ export default class LowlevelTransportWithSharedConnections {
         }
     }
 
-    async configure(signedData: JSON): Promise<void> {
-        // @ts-ignore
+    configure(signedData: JSON): Promise<void> {
         const messages = parseConfigure(signedData);
-        // @ts-ignore
-        this._messages = messages;
+        this.messages = messages;
         this.configured = true;
     }
 
