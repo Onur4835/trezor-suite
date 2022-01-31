@@ -24,6 +24,7 @@ translations:
   script:
     - yarn install --cache-folder .yarn --prefer-offline
     - yarn workspace @trezor/suite translations:list-duplicates
+    - yarn workspace @trezor/suite translations:list-unused
 
 duplicates:
   stage: misc
