@@ -1,0 +1,67 @@
+# tests whether there are not 'too many' outdated dependencies
+.outdated:
+  stage: utils  
+  allow_failure: true
+  script:
+    - ./ci/scripts/outdated.sh
+
+outdated nightly:
+  extends: .outdated
+  only:
+    - schedules
+
+# tests whether urls in constants return 200 status (shall detect dead links)
+.urls health:
+  stage: utils
+  retry: 2
+  script:
+    - yarn install --cache-folder .yarn --prefer-offline
+    - yarn workspace @trezor/suite test-health
+
+urls health nightly:
+  extends: .urls health
+  only:
+    - schedules
+
+.translations duplicates:
+  stage: utils
+  script:
+    - yarn install --cache-folder .yarn --prefer-offline
+    - yarn workspace @trezor/suite translations:list-duplicates
+
+translations duplicates nightly:
+  extends: .translations duplicates
+  only:
+    - schedules
+
+.translations unused:
+  stage: utils
+  script:
+    - yarn install --cache-folder .yarn --prefer-offline
+    - yarn workspace @trezor/suite translations:list-unused
+
+translation unused nightly:
+  extends: .translations unused
+  only:
+    - schedules
+
+translation unused:
+  extends: .translations unused
+  when: manual
+
+.media duplicates:
+  stage: utils
+  parallel:
+    matrix:
+      - EXT: ['.png', '.jpg', '.mp3', '.webm', '.svg']
+  script:
+    - find ./packages/ -name *${EXT} ! -path "**/node_modules/*" ! -empty -type f -exec md5sum {} + | sort | uniq -w32 -dD
+    # - echo "find duplicated .jpg files"
+    # - find ./packages/ -name *.jpg ! -path "**/node_modules/*" ! -empty -type f -exec md5sum {} + | sort | uniq -w32 -dD
+    # - echo "find duplicated .svg files (except flags folder)"
+    # - find ./packages/ -name *.svg ! -path "**/node_modules/*" ! -path **/flags/* ! -empty -type f -exec md5sum {} + | sort | uniq -w32 -dD
+
+media duplicates nightly:
+  extends: .media duplicates
+  only:
+    - schedules
