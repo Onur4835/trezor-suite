@@ -11,7 +11,7 @@ urls_health:
   stage: misc
   # only:
   #   - schedules
-  retry: 3
+  retry: 2
   script:
     - yarn install --cache-folder .yarn --prefer-offline
     # tests whether urls in constants return 200 status (shall detect dead links)
