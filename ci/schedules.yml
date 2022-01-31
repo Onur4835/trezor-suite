@@ -7,7 +7,7 @@ outdated:
     # tests whether there are not 'too many' outdated dependencies
     - ./ci/scripts/outdated.sh
 
-urls_health:
+urls health:
   stage: misc
   # only:
   #   - schedules
@@ -17,12 +17,23 @@ urls_health:
     # tests whether urls in constants return 200 status (shall detect dead links)
     - yarn workspace @trezor/suite test-health
 
-# Few very low priority scripts.
-misc:
+translations:
   stage: misc
   # only:
   #   - schedules
   script:
     - yarn install --cache-folder .yarn --prefer-offline
-    - yarn workspace @trezor/suite-data test-same-svgs
     - yarn workspace @trezor/suite translations:list-duplicates
+
+duplicates:
+  stage: misc
+  # only:
+  #   - schedules
+  script:
+    - echo "find duplicated .png files"
+    - find ./packages/ -name *.png ! -path "**/node_modules/*" ! -empty -type f -exec md5sum {} + | sort | uniq -w32 -dD
+    - echo "find duplicated .jpg files"
+    - find ./packages/ -name *.jpg ! -path "**/node_modules/*" ! -empty -type f -exec md5sum {} + | sort | uniq -w32 -dD
+    - echo "find duplicated .svg files (except flags folder)"
+    - find ./packages/ -name *.svg ! -path "**/node_modules/*" ! -path **/flags/* ! -empty -type f -exec md5sum {} + | sort | uniq -w32 -dD
+    
