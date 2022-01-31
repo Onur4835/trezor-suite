@@ -1,7 +1,7 @@
 outdated:
   stage: misc
-  only:
-    - schedules
+  # only:
+  #   - schedules
   allow_failure: true
   script:
     # tests whether there are not 'too many' outdated dependencies
@@ -9,8 +9,9 @@ outdated:
 
 urls_health:
   stage: misc
-  only:
-    - schedules
+  # only:
+  #   - schedules
+  retry: 3
   script:
     - yarn install --cache-folder .yarn --prefer-offline
     # tests whether urls in constants return 200 status (shall detect dead links)
@@ -19,8 +20,8 @@ urls_health:
 # Few very low priority scripts.
 misc:
   stage: misc
-  only:
-    - schedules
+  # only:
+  #   - schedules
   script:
     - yarn install --cache-folder .yarn --prefer-offline
     - yarn workspace @trezor/suite-data test-same-svgs
