@@ -62,11 +62,7 @@ translation unused:
     matrix:
       - EXT: ['.png', '.jpg', '.mp3', '.webm', '.svg']
   script:
-    - find ./packages/ -name *${EXT} ! -path "**/node_modules/*" ! -empty -type f -exec md5sum {} + | sort | uniq -w32 -dD
-    # - echo "find duplicated .jpg files"
-    # - find ./packages/ -name *.jpg ! -path "**/node_modules/*" ! -empty -type f -exec md5sum {} + | sort | uniq -w32 -dD
-    # - echo "find duplicated .svg files (except flags folder)"
-    # - find ./packages/ -name *.svg ! -path "**/node_modules/*" ! -path **/flags/* ! -empty -type f -exec md5sum {} + | sort | uniq -w32 -dD
+    - ./ci/scripts/find_duplicates.sh ${EXT}
 
 media duplicates nightly:
   extends: .media duplicates
