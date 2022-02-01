@@ -85,7 +85,7 @@ export class ElectrumClient extends BatchingJsonRpcClient implements ElectrumAPI
     private keepAlive() {
         if (!this.socket) return;
         this.keepAliveHandle = setInterval(
-            async client => {
+            async (client: typeof this) => {
                 if (
                     this.timeLastCall !== 0 &&
                     new Date().getTime() > this.timeLastCall + KEEP_ALIVE_INTERVAL / 2
