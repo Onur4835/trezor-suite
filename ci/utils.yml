@@ -1,3 +1,8 @@
+
+.run_everything_rules: &run_everything_rules
+  refs:
+    - schedules
+
 # tests whether there are not 'too many' outdated dependencies
 .outdated:
   stage: utils  
@@ -8,7 +13,7 @@
 outdated nightly:
   extends: .outdated
   only:
-    - schedules
+    <<: *run_everything_rules
 
 # tests whether urls in constants return 200 status (shall detect dead links)
 .urls health:
@@ -21,7 +26,7 @@ outdated nightly:
 urls health nightly:
   extends: .urls health
   only:
-    - schedules
+    <<: *run_everything_rules
 
 .translations duplicates:
   stage: utils
@@ -32,7 +37,7 @@ urls health nightly:
 translations duplicates nightly:
   extends: .translations duplicates
   only:
-    - schedules
+    <<: *run_everything_rules
 
 .translations unused:
   stage: utils
@@ -43,10 +48,12 @@ translations duplicates nightly:
 translation unused nightly:
   extends: .translations unused
   only:
-    - schedules
+    <<: *run_everything_rules
 
 translation unused:
   extends: .translations unused
+  except:
+    <<: *run_everything_rules
   when: manual
 
 .media duplicates:
@@ -64,4 +71,11 @@ translation unused:
 media duplicates nightly:
   extends: .media duplicates
   only:
-    - schedules
+    <<: *run_everything_rules
+
+media duplicates:
+  extends: .media duplicates
+  when: manual
+  except:
+    <<: *run_everything_rules
+
